@@ -1,0 +1,171 @@
+{
+  "$schema": "https://claude.ai/schemas/skill-pack/v1",
+  "name": "layerproof-agent-skills",
+  "version": "1.0.0",
+  "displayName": "Layerproof API Skills",
+  "description": "Agent skills for interacting with the Layerproof public API (X-API-KEY). Covers workspaces, projects, file uploads, slide deck generation, slide editing, themes, exports, and async job polling.",
+  "author": "Layerproof",
+  "homepage": "https://github.com/compilet-dev/agent-skill-layerproof",
+  "repository": "https://github.com/compilet-dev/agent-skill-layerproof",
+  "license": "MIT",
+  "env": [
+    {
+      "name": "LAYERPROOF_BASE_URL",
+      "description": "Layerproof API base URL (e.g. https://api.layerproof.com)",
+      "required": true
+    },
+    {
+      "name": "LAYERPROOF_API_KEY",
+      "description": "Layerproof API key — sent as X-API-KEY header on every request",
+      "required": true
+    }
+  ],
+  "skills": [
+    {
+      "name": "workspaces",
+      "displayName": "Workspace Management",
+      "description": "Create, list, get, update, and delete workspaces. /api/v2/workspaces",
+      "path": "skills/workspaces/SKILL.md",
+      "endpoints": [
+        "POST /api/v2/workspaces",
+        "GET /api/v2/workspaces",
+        "GET /api/v2/workspaces/{workspaceId}",
+        "PUT /api/v2/workspaces/{workspaceId}",
+        "DELETE /api/v2/workspaces/{workspaceId}"
+      ]
+    },
+    {
+      "name": "projects",
+      "displayName": "Project Management",
+      "description": "Create, list, get, update, and delete slide deck projects. /api/v2/projects",
+      "path": "skills/projects/SKILL.md",
+      "endpoints": [
+        "POST /api/v2/projects",
+        "GET /api/v2/projects",
+        "GET /api/v2/projects/{projectId}",
+        "PUT /api/v2/projects/{projectId}",
+        "DELETE /api/v2/projects/{projectId}"
+      ]
+    },
+    {
+      "name": "public-files",
+      "displayName": "Public File Upload",
+      "description": "Upload reference files (images, documents) for outline generation. Prepare → PUT → confirm. /api/v2/files",
+      "path": "skills/public-files/SKILL.md",
+      "endpoints": [
+        "POST /api/v2/files/prepare",
+        "POST /api/v2/files/confirm",
+        "POST /api/v2/files/delete",
+        "POST /api/v2/files/download-url"
+      ]
+    },
+    {
+      "name": "project-files",
+      "displayName": "Project File Management",
+      "description": "Manage files in project directories. Prepare, update, confirm, get, download URL, delete. /api/v2/projects/{projectId}",
+      "path": "skills/project-files/SKILL.md",
+      "endpoints": [
+        "POST /api/v2/projects/{projectId}/directories/{directoryId}/files/prepare",
+        "POST /api/v2/projects/{projectId}/directories/{directoryId}/files/prepare-update",
+        "POST /api/v2/projects/{projectId}/files/{fileId}/confirm",
+        "GET /api/v2/projects/{projectId}/files/{fileId}",
+        "GET /api/v2/projects/{projectId}/files/{fileId}/download-url",
+        "DELETE /api/v2/projects/{projectId}/files/{fileId}"
+      ]
+    },
+    {
+      "name": "slide-decks",
+      "displayName": "Slide Deck Generation",
+      "description": "Generate outlines, batch/single slide content, transcripts, images, themes, audio, import PPTX. /api/v2/projects/{projectId}/slide-deck/{slideDeckId}",
+      "path": "skills/slide-decks/SKILL.md",
+      "endpoints": [
+        "POST /api/v2/projects/{projectId}/slide-deck/{slideDeckId}/outline/generate",
+        "PUT /api/v2/projects/{projectId}/slide-deck/{slideDeckId}/outline",
+        "GET /api/v2/projects/{projectId}/slide-deck/{slideDeckId}/",
+        "POST /api/v2/projects/{projectId}/slide-deck/{slideDeckId}/slides/batch-generate",
+        "POST /api/v2/projects/{projectId}/slide-deck/{slideDeckId}/slides/generate-content",
+        "POST /api/v2/projects/{projectId}/slide-deck/{slideDeckId}/slides/generate-transcript",
+        "POST /api/v2/projects/{projectId}/slide-deck/{slideDeckId}/slides/generate-image",
+        "POST /api/v2/projects/{projectId}/slide-deck/{slideDeckId}/cancel",
+        "POST /api/v2/projects/{projectId}/slide-deck/{slideDeckId}/theme/generate",
+        "PUT /api/v2/projects/{projectId}/slide-deck/{slideDeckId}/slides/{slideSectionId}/transcript",
+        "POST /api/v2/projects/{projectId}/slide-deck/{slideDeckId}/slides/{slideSectionId}/duplicate"
+      ]
+    },
+    {
+      "name": "slides",
+      "displayName": "Slide Editing",
+      "description": "AI image editing, object removal, text extraction, accept edits, revert, save Konva canvas. /api/v2/projects/{projectId}/slides",
+      "path": "skills/slides/SKILL.md",
+      "endpoints": [
+        "POST /api/v2/projects/{projectId}/slides/{slideId}/image-edit",
+        "POST /api/v2/projects/{projectId}/slides/{slideId}/accept-image-edit",
+        "POST /api/v2/projects/{projectId}/slides/{slideId}/revert",
+        "POST /api/v2/projects/{projectId}/slides/{slideId}/object-removal",
+        "POST /api/v2/projects/{projectId}/slides/{slideId}/extract-text",
+        "PUT /api/v2/projects/{projectId}/slides/{slideId}/konva-nodes"
+      ]
+    },
+    {
+      "name": "themes",
+      "displayName": "Theme Management",
+      "description": "List, get, generate, and apply visual themes to slide decks. /api/v2/themes",
+      "path": "skills/themes/SKILL.md",
+      "endpoints": [
+        "GET /api/v2/themes",
+        "GET /api/v2/themes/{themeId}",
+        "POST /api/v2/themes/generate",
+        "POST /api/v2/themes/apply"
+      ]
+    },
+    {
+      "name": "exports",
+      "displayName": "Export Slides",
+      "description": "Export presentations as PNG ZIP or PPTX (async). Poll status, get download URL, cancel. /api/v2/projects/{projectId}/exports",
+      "path": "skills/exports/SKILL.md",
+      "endpoints": [
+        "POST /api/v2/projects/{projectId}/exports/png",
+        "POST /api/v2/projects/{projectId}/exports/pptx",
+        "GET /api/v2/projects/{projectId}/exports/{exportId}",
+        "POST /api/v2/projects/{projectId}/exports/{exportId}/cancel"
+      ]
+    },
+    {
+      "name": "jobs",
+      "displayName": "Job Monitoring",
+      "description": "Poll any async job by activityId. Returns SCHEDULED/RUNNING/PENDING/DONE/CANCELED. /api/v2/jobs",
+      "path": "skills/jobs/SKILL.md",
+      "endpoints": [
+        "GET /api/v2/jobs/{activityId}"
+      ]
+    }
+  ],
+  "installation": {
+    "claudeCode": {
+      "method": "cli",
+      "command": "claude skills install ./marketplace.json",
+      "manual": {
+        "description": "Add skill paths to your CLAUDE.md",
+        "example": "## Agent Skills\n\nLoad the following skill files before performing any Layerproof API operations:\n\n- skills/workspaces/SKILL.md\n- skills/projects/SKILL.md\n- skills/public-files/SKILL.md\n- skills/project-files/SKILL.md\n- skills/slide-decks/SKILL.md\n- skills/slides/SKILL.md\n- skills/themes/SKILL.md\n- skills/exports/SKILL.md\n- skills/jobs/SKILL.md"
+      }
+    },
+    "cursor": {
+      "method": "settings",
+      "settingsKey": "agent.skillPaths",
+      "settingsValue": ["./skills"],
+      "manual": {
+        "description": "Reference SKILL.md files with @ in Cursor chat",
+        "example": "@skills/slide-decks/SKILL.md generate an outline for a product launch"
+      }
+    }
+  },
+  "keywords": [
+    "layerproof",
+    "slide-deck",
+    "presentation",
+    "ai-generation",
+    "api",
+    "curl",
+    "agent-skills"
+  ]
+}

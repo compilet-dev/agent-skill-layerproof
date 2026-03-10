@@ -1,0 +1,150 @@
+---
+name: workspaces
+description: Public API workspace management (X-API-KEY). Create, list, get, update, delete workspaces. Types follow PublicApiWorkspaceController (/api/v2/workspaces).
+---
+
+# Skill: Workspace Management
+
+## Description
+
+Manage workspaces. This skill documents the **public API** at `/api/v2/workspaces` (PublicApiWorkspaceController). Authenticate with `X-API-KEY` header. List supports pagination with `page` and `pageSize` (default 20, max 100).
+
+---
+
+## TypeScript types (request / response)
+
+Mirrors `PublicApiWorkspaceController` data classes.
+
+```typescript
+// --- Create (POST) — 201 ---
+type PublicApiCreateWorkspaceRequest = {
+  name: string;        // required, max 255
+  description?: string | null;
+};
+type PublicApiWorkspaceResponse = {
+  id: string;
+  name: string;
+  description: string | null;
+  projectCount: number;
+  createdAt: string;   // ISO 8601
+  updatedAt: string;   // ISO 8601
+};
+
+// --- List (GET) ---
+type PublicApiWorkspaceListResponse = {
+  data: PublicApiWorkspaceResponse[];
+  total: number;
+  page: number;
+  pageSize: number;
+};
+
+// --- Update (PUT) ---
+type PublicApiUpdateWorkspaceRequest = {
+  name?: string | null;   // max 255
+  description?: string | null;
+};
+```
+
+---
+
+## Create Workspace
+
+Request body: `PublicApiCreateWorkspaceRequest`. Response (201): `PublicApiWorkspaceResponse`.
+
+```bash
+curl -X POST "$LAYERPROOF_BASE_URL/api/v2/workspaces" \
+  -H "Content-Type: application/json" \
+  -H "X-API-KEY: $LAYERPROOF_API_KEY" \
+  -d '{"name":"<workspace_name>","description":"<description>"}'
+```
+
+---
+
+## List Workspaces
+
+Query: `page` (default 20), `pageSize` (default 20, max 100). Response: `PublicApiWorkspaceListResponse`.
+
+```bash
+curl "$LAYERPROOF_BASE_URL/api/v2/workspaces?page=0&pageSize=20" \
+  -H "X-API-KEY: $LAYERPROOF_API_KEY"
+```
+
+---
+
+## Get Workspace
+
+Response: `PublicApiWorkspaceResponse`.
+
+```bash
+curl "$LAYERPROOF_BASE_URL/api/v2/workspaces/<workspace_id>" \
+  -H "X-API-KEY: $LAYERPROOF_API_KEY"
+```
+
+---
+
+## Update Workspace
+
+Request body: `PublicApiUpdateWorkspaceRequest`. Response: `PublicApiWorkspaceResponse`.
+
+```bash
+curl -X PUT "$LAYERPROOF_BASE_URL/api/v2/workspaces/<workspace_id>" \
+  -H "Content-Type: application/json" \
+  -H "X-API-KEY: $LAYERPROOF_API_KEY" \
+  -d '{"name":"New name","description":"New description"}'
+```
+
+---
+
+## Delete Workspace
+
+Response: 204 No Content.
+
+```bash
+curl -X DELETE "$LAYERPROOF_BASE_URL/api/v2/workspaces/<workspace_id>" \
+  -H "X-API-KEY: $LAYERPROOF_API_KEY"
+```
+
+---
+
+## Agent behavior
+
+When the user asks to manage workspaces (create, list, get, update, delete), do the following.
+
+### 1. Choose the right endpoint
+
+| User intent | Endpoint | Method |
+|-------------|----------|--------|
+| Create workspace | `/api/v2/workspaces` | POST |
+| List workspaces | `/api/v2/workspaces?page=0&pageSize=20` | GET |
+| Get workspace by ID | `/api/v2/workspaces/{workspaceId}` | GET |
+| Update workspace | `/api/v2/workspaces/{workspaceId}` | PUT |
+| Delete workspace | `/api/v2/workspaces/{workspaceId}` | DELETE |
+
+### 2. Build and run
+
+- **Auth**: Include `X-API-KEY: $LAYERPROOF_API_KEY`. Read `LAYERPROOF_BASE_URL` and `LAYERPROOF_API_KEY` from the environment; if missing, tell the user to set them.
+- **GET**: Build path and query params (page, pageSize for list). Run curl and show result.
+- **POST/PUT**: Build JSON body (name, description for create; name/description optional for update). Run curl and show result.
+- **DELETE**: Build path; run curl. Response is 204 with no body.
+
+### 3. Response handling
+
+- Always show the **raw JSON response** in a JSON code block.
+- For 204 delete, indicate success and no body.
+- On error, show response body and status code.
+
+### 4. Example flow
+
+**User**: “Create workspace Marketing.”
+
+1. Choose POST /api/v2/workspaces.
+2. Body: `{"name":"Marketing"}` (or with description).
+3. Run curl; show JSON. Returned `id` is the workspace ID for get/update/delete.
+
+---
+
+## Response format (required)
+
+- (if response contains url to show image) please show image and show json response instead of table
+- Always show the **raw JSON response** (verbatim) in a JSON code block.
+- If the response contains a URL for an image, **render/show the image** and also show the **JSON response** (do not convert to a table).
