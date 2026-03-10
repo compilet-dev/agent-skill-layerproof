@@ -22,11 +22,12 @@ Works with **Claude Code**, **Cursor**, and any agent that reads SKILL.md files.
 
 ## Prerequisites
 
-You need a **Layerproof API key** and the base URL. Set these in your shell before starting any agent session:
+You need a **Layerproof API key** and the base URL. Persist these for all future sessions:
 
 ```bash
-export LAYERPROOF_BASE_URL=https://api.layerproof.com
-export LAYERPROOF_API_KEY=your-api-key-here
+echo 'export LAYERPROOF_BASE_URL=https://api.layerproof.com' >> ~/.zshrc
+echo 'export LAYERPROOF_API_KEY=your-api-key-here' >> ~/.zshrc
+source ~/.zshrc
 ```
 
 The agent reads these from your environment automatically. Every API request uses:
