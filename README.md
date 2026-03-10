@@ -10,8 +10,8 @@ Works with **Claude Code**, **Cursor**, and any agent that reads SKILL.md files.
 
 - [Prerequisites](#prerequisites)
 - [Installation](#installation)
+  - [npx skills (recommended)](#npx-skills-recommended)
   - [Claude Code](#claude-code)
-  - [Cursor](#cursor)
 - [Available Skills](#available-skills)
 - [Typical Workflows](#typical-workflows)
 - [Environment Variables](#environment-variables)
@@ -39,6 +39,40 @@ X-API-KEY: $LAYERPROOF_API_KEY
 ---
 
 ## Installation
+
+### npx skills (recommended)
+
+The fastest way to install skills into any supported agent (Claude Code, Cursor, Codex, OpenCode).
+
+**Install all skills:**
+
+```bash
+npx skills add compilet-dev/agent-skill-layerproof
+```
+
+**Install specific skills only:**
+
+```bash
+npx skills add compilet-dev/agent-skill-layerproof --skill workspaces
+npx skills add compilet-dev/agent-skill-layerproof --skill slide-decks
+npx skills add compilet-dev/agent-skill-layerproof --skill exports
+```
+
+**List all available skills before installing:**
+
+```bash
+npx skills add compilet-dev/agent-skill-layerproof --list
+```
+
+**Install globally** (available across all your projects):
+
+```bash
+npx skills add compilet-dev/agent-skill-layerproof -g
+```
+
+`npx skills` auto-detects your installed agents and places skill files in the correct directories (e.g. `.cursor/skills/`, `.claude/skills/`).
+
+---
 
 ### Claude Code
 
@@ -90,33 +124,6 @@ X-API-KEY: $LAYERPROOF_API_KEY
 
 ---
 
-### Cursor
-
-1. **Clone this repository** anywhere accessible:
-
-   ```bash
-   git clone https://github.com/your-org/agent-skill-layerproof ~/.layerproof-skills
-   ```
-
-2. **Add to `.cursor/settings.json`** or via Cursor Settings → Agent → Skills:
-
-   ```json
-   {
-     "agent.skillPaths": [
-       "~/.layerproof-skills/skills"
-     ]
-   }
-   ```
-
-3. **Or reference individual SKILL.md files** using `@` in the chat:
-
-   ```
-   @~/.layerproof-skills/skills/slide-decks/SKILL.md generate an outline for a product launch
-   ```
-
-4. **Set environment variables** in your shell profile and restart Cursor.
-
----
 
 ## Available Skills
 
