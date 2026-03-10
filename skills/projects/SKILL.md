@@ -34,7 +34,7 @@ type PublicApiCreateProjectRequest = {
   name: string;                   // required, 1–255 chars
   description?: string | null;    // max 10000 chars
   metadata?: Record<string, any> | null;
-  projectKind?: "SLIDE_DECK" | "GENERIC" | "MINDMAP" | "THEME" | "BLOG_POST" | "SOCIAL_CAMPAIGN";  // default: SLIDE_DECK
+  project_kind?: "SLIDE_DECK" | "GENERIC" | "MINDMAP" | "THEME" | "BLOG_POST" | "SOCIAL_CAMPAIGN";  // default: SLIDE_DECK
 };
 
 // --- Update (PUT) ---
@@ -42,13 +42,13 @@ type PublicApiUpdateProjectRequest = {
   name?: string | null;           // 1–255 chars
   description?: string | null;    // max 10000 chars
   metadata?: Record<string, any> | null;
-  isPublic?: boolean | null;
+  is_public?: boolean | null;
 };
 
 // --- Clone (POST /{projectId}/clone) — 201 ---
 type CloneProjectRequest = {
   name?: string | null;           // defaults to "Copy of <source name>"
-  workspaceId?: string | null;    // UUID; if null, auto-creates hidden workspace
+  workspace_id?: string | null;   // UUID; if null, auto-creates hidden workspace
 };
 
 // --- Project response ---
@@ -57,21 +57,21 @@ type PublicApiProjectResponse = {
   name: string;
   description: string | null;
   status: string;                 // e.g. "ACTIVE", "DRAFT"
-  projectKind: string;            // e.g. "SLIDE_DECK"
+  project_kind: string;           // e.g. "SLIDE_DECK"
   metadata: Record<string, any>;
-  slideDeckId: string | null;
-  createdAt: string;              // ISO 8601
-  updatedAt: string;              // ISO 8601
-  isPublic: boolean;
-  voteCount: number;
-  hasVoted?: boolean | null;
+  slide_deck_id: string | null;
+  created_at: string;             // ISO 8601
+  updated_at: string;             // ISO 8601
+  is_public: boolean;
+  vote_count: number;
+  has_voted?: boolean | null;
 };
 
 // --- List response (cursor-paginated) ---
 type PublicApiProjectListResponse = {
   data: PublicApiProjectResponse[];
-  nextCursor: string | null;      // pass as `cursor` param for next page
-  hasMore: boolean;
+  next_cursor: string | null;     // pass as `cursor` param for next page
+  has_more: boolean;
 };
 ```
 
@@ -79,7 +79,7 @@ type PublicApiProjectListResponse = {
 
 ## List Projects
 
-Query params: `limit` (default 20, max 100), `cursor` (from previous `nextCursor`).
+Query params: `limit` (default 20, max 100), `cursor` (from previous `next_cursor`).
 
 ```bash
 curl "$LAYERPROOF_BASE_URL/api/v2/projects?limit=20" \
@@ -89,7 +89,7 @@ curl "$LAYERPROOF_BASE_URL/api/v2/projects?limit=20" \
 Example JSON response:
 
 ```json
-{"data":[{"id":"2b12d232-eca6-4161-96df-9f954fbbb36f","name":"Exit Strategy Overview","description":"...","status":"ACTIVE","projectKind":"SLIDE_DECK","metadata":{},"slideDeckId":"ab2c64a5-0b59-45ec-baef-1d5b68dbf5fe","createdAt":"2026-03-09T03:15:51.548959Z","updatedAt":"2026-03-09T03:16:17.069810Z","isPublic":false,"voteCount":0,"hasVoted":null}],"nextCursor":null,"hasMore":false}
+{"data":[{"id":"2b12d232-eca6-4161-96df-9f954fbbb36f","name":"Exit Strategy Overview","description":"...","status":"ACTIVE","project_kind":"SLIDE_DECK","metadata":{},"slide_deck_id":"ab2c64a5-0b59-45ec-baef-1d5b68dbf5fe","created_at":"2026-03-09T03:15:51.548959Z","updated_at":"2026-03-09T03:16:17.069810Z","is_public":false,"vote_count":0,"has_voted":null}],"next_cursor":null,"has_more":false}
 ```
 
 ---
@@ -104,7 +104,7 @@ curl "$LAYERPROOF_BASE_URL/api/v2/projects/<project_id>" \
 Example JSON response:
 
 ```json
-{"id":"2b12d232-eca6-4161-96df-9f954fbbb36f","name":"Exit Strategy Overview","description":"...","status":"ACTIVE","projectKind":"SLIDE_DECK","metadata":{"originalPrompt":"Create an exit strategy overview"},"slideDeckId":"ab2c64a5-0b59-45ec-baef-1d5b68dbf5fe","createdAt":"2026-03-09T03:15:51.548959Z","updatedAt":"2026-03-09T03:16:17.069810Z","isPublic":false,"voteCount":0,"hasVoted":false}
+{"id":"2b12d232-eca6-4161-96df-9f954fbbb36f","name":"Exit Strategy Overview","description":"...","status":"ACTIVE","project_kind":"SLIDE_DECK","metadata":{"original_prompt":"Create an exit strategy overview"},"slide_deck_id":"ab2c64a5-0b59-45ec-baef-1d5b68dbf5fe","created_at":"2026-03-09T03:15:51.548959Z","updated_at":"2026-03-09T03:16:17.069810Z","is_public":false,"vote_count":0,"has_voted":false}
 ```
 
 ---
@@ -120,14 +120,14 @@ curl -X POST "$LAYERPROOF_BASE_URL/api/v2/projects" \
   -d '{
     "name": "<project_name>",
     "description": "<description>",
-    "projectKind": "SLIDE_DECK"
+    "project_kind": "SLIDE_DECK"
   }'
 ```
 
 Example JSON response:
 
 ```json
-{"id":"68f8270f-f36a-4817-8d0b-2c05efcd1c9a","name":"tmp-skill-project","description":"tmp","status":"DRAFT","projectKind":"SLIDE_DECK","metadata":{},"slideDeckId":"a877d0c0-9514-40cc-8d27-cee3a1e73934","createdAt":"2026-03-10T07:07:46.211172Z","updatedAt":"2026-03-10T07:07:46.211176Z","isPublic":false,"voteCount":0,"hasVoted":null}
+{"id":"68f8270f-f36a-4817-8d0b-2c05efcd1c9a","name":"tmp-skill-project","description":"tmp","status":"DRAFT","project_kind":"SLIDE_DECK","metadata":{},"slide_deck_id":"a877d0c0-9514-40cc-8d27-cee3a1e73934","created_at":"2026-03-10T07:07:46.211172Z","updated_at":"2026-03-10T07:07:46.211176Z","is_public":false,"vote_count":0,"has_voted":null}
 ```
 
 ---
@@ -140,7 +140,7 @@ Request body: `PublicApiUpdateProjectRequest`. Only provided fields are updated.
 curl -X PUT "$LAYERPROOF_BASE_URL/api/v2/projects/<project_id>" \
   -H "Content-Type: application/json" \
   -H "X-API-KEY: $LAYERPROOF_API_KEY" \
-  -d '{"name":"<new_name>","description":"<new_description>","isPublic":true}'
+  -d '{"name":"<new_name>","description":"<new_description>","is_public":true}'
 ```
 
 ---
@@ -197,7 +197,7 @@ Clones an owned or public project into a new private project. Request body: `Clo
 curl -X POST "$LAYERPROOF_BASE_URL/api/v2/projects/<project_id>/clone" \
   -H "Content-Type: application/json" \
   -H "X-API-KEY: $LAYERPROOF_API_KEY" \
-  -d '{"name":"<cloned_project_name>","workspaceId":"<workspace_id>"}'
+  -d '{"name":"<cloned_project_name>","workspace_id":"<workspace_id>"}'
 ```
 
 ---
@@ -223,7 +223,7 @@ When the user asks to manage projects, do the following.
 ### 2. Build and run the request
 
 - **Auth**: Include `X-API-KEY: $LAYERPROOF_API_KEY`. Read `LAYERPROOF_BASE_URL` and `LAYERPROOF_API_KEY` from the environment; if missing, tell the user to set them.
-- **GET list**: Use `limit` (default 20, max 100) and `cursor` for pagination. Pass `nextCursor` from a previous response as `cursor` to fetch the next page.
+- **GET list**: Use `limit` (default 20, max 100) and `cursor` for pagination. Pass `next_cursor` from a previous response as `cursor` to fetch the next page.
 - **POST/PUT**: Build JSON body from the appropriate request type. Run curl and show result.
 - **DELETE project / vote**: Build path; run curl. Response is 204 with no body.
 
@@ -238,8 +238,8 @@ When the user asks to manage projects, do the following.
 **User**: "Create a project called Q3 Roadmap."
 
 1. Choose POST `/api/v2/projects`.
-2. Body: `{"name":"Q3 Roadmap","projectKind":"SLIDE_DECK"}`.
-3. Run curl; show JSON. The returned `id` is the project ID; `slideDeckId` is the associated slide deck.
+2. Body: `{"name":"Q3 Roadmap","project_kind":"SLIDE_DECK"}`.
+3. Run curl; show JSON. The returned `id` is the project ID; `slide_deck_id` is the associated slide deck.
 
 ---
 

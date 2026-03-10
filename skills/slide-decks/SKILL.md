@@ -19,26 +19,26 @@ Mirrors `PublicApiSlideDeckController` data classes.
 // --- Outline section (used in UpdateOutlineRequest and responses) ---
 type PublicApiOutlineSection = {
   id: string;
-  sectionTitle: string;
+  section_title: string;
   content?: string | null;
-  keyPoints?: string[] | null;
-  visualSuggestion?: string | null;
-  speakerNotes?: string | null;
+  key_points?: string[] | null;
+  visual_suggestion?: string | null;
+  speaker_notes?: string | null;
 };
 
 // --- Generate Outline (POST) — async ---
 type GenerateOutlineRequest = {
-  prompt: string;           // 3–2000 chars, required
-  slideCount?: number;     // default 5, min 1
-  language?: string;       // 2–10 chars, e.g. "en"
-  fileS3Keys?: string[];   // from POST /api/v2/files/prepare
-  webSearchEnabled?: boolean;
+  prompt: string;               // 3–2000 chars, required
+  slide_count?: number;         // default 5, min 1
+  language?: string;            // 2–10 chars, e.g. "en"
+  file_s3_keys?: string[];      // from POST /api/v2/files/prepare
+  web_search_enabled?: boolean;
 };
 type GenerateOutlineResponse = {
-  activityId: string;
+  activity_id: string;
   status: string;
   message: string;
-  estimatedCompletionSeconds?: number;
+  estimated_completion_seconds?: number;
 };
 
 // --- Update Outline (PUT) ---
@@ -50,42 +50,42 @@ type PublicApiOutline = {
   id: string;
   title: string;
   sections: PublicApiOutlineSection[];
-  totalSections: number;
-  updatedAt?: string;
+  total_sections: number;
+  updated_at?: string;
 };
 type UpdateOutlineResponse = { outline: PublicApiOutline };
 
 // --- Get Deck (GET) ---
 type PublicApiSlideDeck = {
   id: string;
-  projectId: string;
+  project_id: string;
   title: string;
-  aspectRatio: string;
+  aspect_ratio: string;
   theme?: string | null;
-  outlineGenerationLiveObjectId?: string | null;
-  createdAt: string;
-  updatedAt: string;
+  outline_generation_live_object_id?: string | null;
+  created_at: string;
+  updated_at: string;
 };
 type PublicApiSlide = {
   id: string;
   index: number;
-  sectionId: string;
-  sectionTitle: string;
+  section_id: string;
+  section_title: string;
   transcript?: string | null;
-  imageUrl?: string | null;
-  imageExpiresAt?: string | null;
-  generationStatus: string;
-  createdAt: string;
-  updatedAt: string;
+  image_url?: string | null;
+  image_expires_at?: string | null;
+  generation_status: string;
+  created_at: string;
+  updated_at: string;
 };
 type PublicApiDeckMetadata = {
-  totalSlides: number;
-  completedSlides: number;
-  pendingSlides: number;
-  overallProgress: number;
+  total_slides: number;
+  completed_slides: number;
+  pending_slides: number;
+  overall_progress: number;
 };
 type GetDeckResponse = {
-  slideDeck: PublicApiSlideDeck;
+  slide_deck: PublicApiSlideDeck;
   outline: PublicApiOutline;
   slides: PublicApiSlide[];
   metadata: PublicApiDeckMetadata;
@@ -93,109 +93,109 @@ type GetDeckResponse = {
 
 // --- Batch Generate Slides (POST) — async ---
 type BatchGenerateSlidesRequest = {
-  generationType?: string;   // default "BOTH"
-  speakingStyle?: string | null;
-  targetDurationMinutes?: number | null;
-  transcriptTone?: string | null;
-  aspectRatio?: string | null;
-  outputLanguage?: string | null;
-  textDetailLevel?: string | null;
+  generation_type?: string;          // default "BOTH"
+  speaking_style?: string | null;
+  target_duration_minutes?: number | null;
+  transcript_tone?: string | null;
+  aspect_ratio?: string | null;
+  output_language?: string | null;
+  text_detail_level?: string | null;
   tone?: string | null;
 };
 type BatchGenerateSlidesResponse = {
-  activityId: string;
-  totalSlides: number;
+  activity_id: string;
+  total_slides: number;
   status: string;
   message: string;
-  estimatedCompletionSeconds: number;
+  estimated_completion_seconds: number;
 };
 
 // --- Generate Slide Content / Transcript / Image (POST) — async ---
 type GenerateSlideContentRequest = {
-  slideSectionId: string;
-  speakingStyle?: string | null;
-  targetDurationMinutes?: number | null;
-  generationType?: string | null;
+  slide_section_id: string;
+  speaking_style?: string | null;
+  target_duration_minutes?: number | null;
+  generation_type?: string | null;
 };
 type GenerateSlideContentResponse = {
-  activityId: string;
-  slideSectionId: string;
-  transcriptGenLiveObjectId?: string | null;
-  imageGenLiveObjectId?: string | null;
+  activity_id: string;
+  slide_section_id: string;
+  transcript_gen_live_object_id?: string | null;
+  image_gen_live_object_id?: string | null;
   status: string;
   message: string;
 };
 
 type GenerateSlideTranscriptRequest = {
-  slideSectionId: string;
-  speakingStyle?: string | null;
-  targetDurationMinutes?: number | null;
-  transcriptTone?: string | null;
+  slide_section_id: string;
+  speaking_style?: string | null;
+  target_duration_minutes?: number | null;
+  transcript_tone?: string | null;
 };
 type GenerateSlideTranscriptResponse = {
-  activityId: string;
-  slideSectionId: string;
-  transcriptGenLiveObjectId: string;
+  activity_id: string;
+  slide_section_id: string;
+  transcript_gen_live_object_id: string;
   status: string;
   message: string;
-  estimatedCompletionSeconds?: number;
+  estimated_completion_seconds?: number;
 };
 
 type GenerateSlideImageRequest = {
-  slideSectionId: string;
-  aspectRatio?: string;  // "16:9" | "4:3" | "1:1", default "16:9"
+  slide_section_id: string;
+  aspect_ratio?: string;  // "16:9" | "4:3" | "1:1", default "16:9"
 };
 type GenerateSlideImageResponse = {
-  activityId: string;
-  slideSectionId: string;
-  imageGenLiveObjectId: string;
+  activity_id: string;
+  slide_section_id: string;
+  image_gen_live_object_id: string;
   status: string;
   message: string;
-  estimatedCompletionSeconds?: number;
+  estimated_completion_seconds?: number;
 };
 
 // --- Cancel Generation (POST) ---
-type CancelGenerationRequest = { liveObjectIds?: string[] | null };
+type CancelGenerationRequest = { live_object_ids?: string[] | null };
 type CancelGenerationResponse = {
-  cancelledLiveObjects: string[];
-  failedToCancelLiveObjects: string[];
-  totalActivitiesCancelled: number;
+  cancelled_live_objects: string[];
+  failed_to_cancel_live_objects: string[];
+  total_activities_cancelled: number;
   message: string;
 };
 
 // --- Generate Theme (POST) — async ---
 type GenerateThemeRequest = {
-  prompt: string;              // 10–2000 chars
-  referenceImagePaths?: string[] | null;
+  prompt: string;                      // 10–2000 chars
+  reference_image_paths?: string[] | null;
 };
 type GenerateThemeResponse = {
-  activityId: string;
+  activity_id: string;
   status: string;
   message: string;
-  estimatedCompletionSeconds: number;
+  estimated_completion_seconds: number;
 };
 
 // --- Update Transcript (PUT) ---
 type UpdateTranscriptRequest = { transcript: string };
 type UpdateTranscriptResponse = {
-  slideSectionId: string;
-  versionId: string;
-  versionNumber: number;
-  transcriptGenLiveObjectId: string;
+  slide_section_id: string;
+  version_id: string;
+  version_number: number;
+  transcript_gen_live_object_id: string;
   transcript: string;
-  updatedAt: string;
+  updated_at: string;
 };
 
 // --- Duplicate Section (POST) ---
 type DuplicateSectionRequest = {
-  copyContent?: boolean;
-  insertAfter?: boolean;
+  copy_content?: boolean;
+  insert_after?: boolean;
 };
 type DuplicateSectionResponse = {
-  newSectionId: string;
-  newSection: PublicApiOutlineSection;
-  transcriptGenLiveObjectId?: string | null;
-  imageGenLiveObjectId?: string | null;
+  new_section_id: string;
+  new_section: PublicApiOutlineSection;
+  transcript_gen_live_object_id?: string | null;
+  image_gen_live_object_id?: string | null;
   message: string;
 };
 ```
@@ -206,13 +206,13 @@ type DuplicateSectionResponse = {
 
 Request body: `GenerateOutlineRequest`. Response (202): `GenerateOutlineResponse`.
 
-Starts outline generation from a prompt. Use `fileS3Keys` from files uploaded via `/api/v2/files/prepare` and confirm. Poll `GET /api/v2/jobs/{activityId}` for status.
+Starts outline generation from a prompt. Use `file_s3_keys` from files uploaded via `/api/v2/files/prepare` and confirm. Poll `GET /api/v2/jobs/{activityId}` for status.
 
 ```bash
 curl -X POST "$LAYERPROOF_BASE_URL/api/v2/projects/<project_id>/slide-deck/<slide_deck_id>/outline/generate" \
   -H "Content-Type: application/json" \
   -H "X-API-KEY: $LAYERPROOF_API_KEY" \
-  -d '{"prompt":"Create a product launch deck","slideCount":6}'
+  -d '{"prompt":"Create a product launch deck","slide_count":6}'
 ```
 
 With reference files and language:
@@ -221,7 +221,7 @@ With reference files and language:
 curl -X POST "$LAYERPROOF_BASE_URL/api/v2/projects/<project_id>/slide-deck/<slide_deck_id>/outline/generate" \
   -H "Content-Type: application/json" \
   -H "X-API-KEY: $LAYERPROOF_API_KEY" \
-  -d '{"prompt":"Q4 strategy","slideCount":5,"language":"en","fileS3Keys":["public-api/.../file.pdf"],"webSearchEnabled":true}'
+  -d '{"prompt":"Q4 strategy","slide_count":5,"language":"en","file_s3_keys":["public-api/.../file.pdf"],"web_search_enabled":true}'
 ```
 
 ---
@@ -236,19 +236,19 @@ Updates outline title and sections (add, remove, reorder). At least one section 
 curl -X PUT "$LAYERPROOF_BASE_URL/api/v2/projects/<project_id>/slide-deck/<slide_deck_id>/outline" \
   -H "Content-Type: application/json" \
   -H "X-API-KEY: $LAYERPROOF_API_KEY" \
-  -d '{"title":"My Deck","sections":[{"id":"section-uuid","sectionTitle":"Intro","content":"...","speakerNotes":"..."}]}'
+  -d '{"title":"My Deck","sections":[{"id":"section-uuid","section_title":"Intro","content":"...","speaker_notes":"..."}]}'
 ```
 
 ---
 
 ## Get Full Slide Deck
 
-Query: `includeImages` (default true), `imageExpirySeconds` (default 3600). Response: `GetDeckResponse`.
+Query: `include_images` (default true), `image_expiry_seconds` (default 3600). Response: `GetDeckResponse`.
 
 Returns deck, outline, slides with presigned image URLs, and metadata.
 
 ```bash
-curl "$LAYERPROOF_BASE_URL/api/v2/projects/<project_id>/slide-deck/<slide_deck_id>/?includeImages=true&imageExpirySeconds=3600" \
+curl "$LAYERPROOF_BASE_URL/api/v2/projects/<project_id>/slide-deck/<slide_deck_id>/?include_images=true&image_expiry_seconds=3600" \
   -H "X-API-KEY: $LAYERPROOF_API_KEY"
 ```
 
@@ -258,13 +258,13 @@ curl "$LAYERPROOF_BASE_URL/api/v2/projects/<project_id>/slide-deck/<slide_deck_i
 
 Request body: `BatchGenerateSlidesRequest`. Response (202): `BatchGenerateSlidesResponse`.
 
-Generate transcript and/or images for all outline sections. Requires an outline first. Poll jobs with `activityId`.
+Generate transcript and/or images for all outline sections. Requires an outline first. Poll jobs with `activity_id`.
 
 ```bash
 curl -X POST "$LAYERPROOF_BASE_URL/api/v2/projects/<project_id>/slide-deck/<slide_deck_id>/slides/batch-generate" \
   -H "Content-Type: application/json" \
   -H "X-API-KEY: $LAYERPROOF_API_KEY" \
-  -d '{"generationType":"BOTH"}'
+  -d '{"generation_type":"BOTH"}'
 ```
 
 ---
@@ -279,7 +279,7 @@ Generate transcript and image for one section. Poll `GET /api/v2/jobs/{activityI
 curl -X POST "$LAYERPROOF_BASE_URL/api/v2/projects/<project_id>/slide-deck/<slide_deck_id>/slides/generate-content" \
   -H "Content-Type: application/json" \
   -H "X-API-KEY: $LAYERPROOF_API_KEY" \
-  -d '{"slideSectionId":"<section_uuid>"}'
+  -d '{"slide_section_id":"<section_uuid>"}'
 ```
 
 ---
@@ -292,7 +292,7 @@ Request body: `GenerateSlideTranscriptRequest`. Response (202): `GenerateSlideTr
 curl -X POST "$LAYERPROOF_BASE_URL/api/v2/projects/<project_id>/slide-deck/<slide_deck_id>/slides/generate-transcript" \
   -H "Content-Type: application/json" \
   -H "X-API-KEY: $LAYERPROOF_API_KEY" \
-  -d '{"slideSectionId":"<section_uuid>"}'
+  -d '{"slide_section_id":"<section_uuid>"}'
 ```
 
 ---
@@ -305,7 +305,7 @@ Request body: `GenerateSlideImageRequest`. Response (202): `GenerateSlideImageRe
 curl -X POST "$LAYERPROOF_BASE_URL/api/v2/projects/<project_id>/slide-deck/<slide_deck_id>/slides/generate-image" \
   -H "Content-Type: application/json" \
   -H "X-API-KEY: $LAYERPROOF_API_KEY" \
-  -d '{"slideSectionId":"<section_uuid>","aspectRatio":"16:9"}'
+  -d '{"slide_section_id":"<section_uuid>","aspect_ratio":"16:9"}'
 ```
 
 ---
@@ -314,13 +314,13 @@ curl -X POST "$LAYERPROOF_BASE_URL/api/v2/projects/<project_id>/slide-deck/<slid
 
 Request body: `CancelGenerationRequest`. Response: `CancelGenerationResponse`.
 
-Provide `liveObjectIds` from active generation responses to cancel.
+Provide `live_object_ids` from active generation responses to cancel.
 
 ```bash
 curl -X POST "$LAYERPROOF_BASE_URL/api/v2/projects/<project_id>/slide-deck/<slide_deck_id>/cancel" \
   -H "Content-Type: application/json" \
   -H "X-API-KEY: $LAYERPROOF_API_KEY" \
-  -d '{"liveObjectIds":["<live_object_uuid>"]}'
+  -d '{"live_object_ids":["<live_object_uuid>"]}'
 ```
 
 ---
@@ -363,7 +363,7 @@ Path includes `slideSectionId`: `POST .../slides/{slideSectionId}/duplicate`.
 curl -X POST "$LAYERPROOF_BASE_URL/api/v2/projects/<project_id>/slide-deck/<slide_deck_id>/slides/<slide_section_id>/duplicate" \
   -H "Content-Type: application/json" \
   -H "X-API-KEY: $LAYERPROOF_API_KEY" \
-  -d '{"copyContent":true,"insertAfter":true}'
+  -d '{"copy_content":true,"insert_after":true}'
 ```
 
 ---
@@ -396,27 +396,27 @@ Other endpoints (improve section, generate-manual, visual style, transcript vers
 
 - **Auth**: Every request must include `X-API-KEY: $LAYERPROOF_API_KEY`. Read `LAYERPROOF_BASE_URL` and `LAYERPROOF_API_KEY` from the environment; if missing, tell the user to set them.
 - **Path**: Resolve `projectId` and `slideDeckId` (and `slideSectionId` where needed) from context or user input. If missing, ask.
-- **GET**: Build curl with path and query params (`includeImages`, `imageExpirySeconds` for get deck). Run and show result.
+- **GET**: Build curl with path and query params (`include_images`, `image_expiry_seconds` for get deck). Run and show result.
 - **POST/PUT**: Build JSON body from the types above. Use `-X POST` or `-X PUT`, `-H "Content-Type: application/json"`, and `-d '...'`. Run and show result.
 
 ### 3. After async endpoints
 
-- Responses include `activityId`. Tell the user the job was started and suggest polling `GET $LAYERPROOF_BASE_URL/api/v2/jobs/{activityId}` until `status` is `DONE` or `CANCELED`.
+- Responses include `activity_id`. Tell the user the job was started and suggest polling `GET $LAYERPROOF_BASE_URL/api/v2/jobs/{activityId}` until `status` is `DONE` or `CANCELED`.
 - Typical flow: generate outline → poll until DONE → get deck or update outline → batch generate slides or generate single slide content/transcript/image → poll jobs.
 
 ### 4. Response handling
 
 - Always show the **raw JSON response** in a JSON code block; do not convert to a table.
-- If the response contains image URLs (e.g. in get deck `slides[].imageUrl`), show images and the JSON.
+- If the response contains image URLs (e.g. in get deck `slides[].image_url`), show images and the JSON.
 - On error (4xx/5xx), show the response body and status code; suggest fixing API key, projectId/slideDeckId/sectionId, or request body.
 
 ### 5. Example flow
 
-**User**: “Generate an outline for a product launch deck in project X.”
+**User**: "Generate an outline for a product launch deck in project X."
 
-1. Resolve projectId and slideDeckId (e.g. from GET projects, then project.slideDeckId).
+1. Resolve projectId and slideDeckId (e.g. from GET projects, then `project.slide_deck_id`).
 2. Choose `POST .../outline/generate`.
-3. Build body: `{"prompt":"Product launch deck","slideCount":5}`.
+3. Build body: `{"prompt":"Product launch deck","slide_count":5}`.
 4. Run curl; show JSON. Tell user to poll `GET /api/v2/jobs/{activityId}` and then call get deck or update outline as needed.
 
 ---
@@ -426,21 +426,3 @@ Other endpoints (improve section, generate-manual, visual style, transcript vers
 - (if response contains url to show image) please show image and show json response instead of table
 - Always show the **raw JSON response** (verbatim) in a JSON code block.
 - If the response contains a URL for an image, **render/show the image** and also show the **JSON response** (do not convert to a table).
-
-Example JSON responses:
-
-```json
-{"activityId":"job-uuid","status":"PENDING","message":"Outline generation started. Poll /api/v2/jobs/... for status.","estimatedCompletionSeconds":30}
-```
-
-```json
-{"outline":{"id":"outline-uuid","title":"My Deck","sections":[{"id":"sec-1","sectionTitle":"Intro","content":"...","keyPoints":[],"visualSuggestion":null,"speakerNotes":"..."}],"totalSections":1,"updatedAt":"2026-03-10T08:00:00Z"}}
-```
-
-```json
-{"slideDeck":{"id":"deck-uuid","projectId":"proj-uuid","title":"My Deck","aspectRatio":"16:9","theme":null,"outlineGenerationLiveObjectId":"...","createdAt":"2026-03-10T08:00:00Z","updatedAt":"2026-03-10T08:00:00Z"},"outline":{...},"slides":[{"id":"slide-uuid","index":0,"sectionId":"sec-1","sectionTitle":"Intro","transcript":"...","imageUrl":"https://...","imageExpiresAt":"...","generationStatus":"COMPLETED","createdAt":"...","updatedAt":"..."}],"metadata":{"totalSlides":1,"completedSlides":1,"pendingSlides":0,"overallProgress":100}}
-```
-
-```json
-{"activityId":"job-uuid","totalSlides":5,"status":"PENDING","message":"Batch generation started for 5 slides","estimatedCompletionSeconds":60}
-```

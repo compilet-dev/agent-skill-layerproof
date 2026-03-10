@@ -7,7 +7,7 @@ description: Public API workspace management (X-API-KEY). Create, list, get, upd
 
 ## Description
 
-Manage workspaces. This skill documents the **public API** at `/api/v2/workspaces` (PublicApiWorkspaceController). Authenticate with `X-API-KEY` header. List supports pagination with `page` and `pageSize` (default 20, max 100).
+Manage workspaces. This skill documents the **public API** at `/api/v2/workspaces` (PublicApiWorkspaceController). Authenticate with `X-API-KEY` header. List supports pagination with `page` and `page_size` (default 20, max 100).
 
 ---
 
@@ -25,9 +25,9 @@ type PublicApiWorkspaceResponse = {
   id: string;
   name: string;
   description: string | null;
-  projectCount: number;
-  createdAt: string;   // ISO 8601
-  updatedAt: string;   // ISO 8601
+  project_count: number;
+  created_at: string;   // ISO 8601
+  updated_at: string;   // ISO 8601
 };
 
 // --- List (GET) ---
@@ -35,7 +35,7 @@ type PublicApiWorkspaceListResponse = {
   data: PublicApiWorkspaceResponse[];
   total: number;
   page: number;
-  pageSize: number;
+  page_size: number;
 };
 
 // --- Update (PUT) ---
@@ -62,10 +62,10 @@ curl -X POST "$LAYERPROOF_BASE_URL/api/v2/workspaces" \
 
 ## List Workspaces
 
-Query: `page` (default 20), `pageSize` (default 20, max 100). Response: `PublicApiWorkspaceListResponse`.
+Query: `page` (default 0), `page_size` (default 20, max 100). Response: `PublicApiWorkspaceListResponse`.
 
 ```bash
-curl "$LAYERPROOF_BASE_URL/api/v2/workspaces?page=0&pageSize=20" \
+curl "$LAYERPROOF_BASE_URL/api/v2/workspaces?page=0&page_size=20" \
   -H "X-API-KEY: $LAYERPROOF_API_KEY"
 ```
 
@@ -115,7 +115,7 @@ When the user asks to manage workspaces (create, list, get, update, delete), do 
 | User intent | Endpoint | Method |
 |-------------|----------|--------|
 | Create workspace | `/api/v2/workspaces` | POST |
-| List workspaces | `/api/v2/workspaces?page=0&pageSize=20` | GET |
+| List workspaces | `/api/v2/workspaces?page=0&page_size=20` | GET |
 | Get workspace by ID | `/api/v2/workspaces/{workspaceId}` | GET |
 | Update workspace | `/api/v2/workspaces/{workspaceId}` | PUT |
 | Delete workspace | `/api/v2/workspaces/{workspaceId}` | DELETE |
@@ -123,7 +123,7 @@ When the user asks to manage workspaces (create, list, get, update, delete), do 
 ### 2. Build and run
 
 - **Auth**: Include `X-API-KEY: $LAYERPROOF_API_KEY`. Read `LAYERPROOF_BASE_URL` and `LAYERPROOF_API_KEY` from the environment; if missing, tell the user to set them.
-- **GET**: Build path and query params (page, pageSize for list). Run curl and show result.
+- **GET**: Build path and query params (`page`, `page_size` for list). Run curl and show result.
 - **POST/PUT**: Build JSON body (name, description for create; name/description optional for update). Run curl and show result.
 - **DELETE**: Build path; run curl. Response is 204 with no body.
 
@@ -135,7 +135,7 @@ When the user asks to manage workspaces (create, list, get, update, delete), do 
 
 ### 4. Example flow
 
-**User**: “Create workspace Marketing.”
+**User**: "Create workspace Marketing."
 
 1. Choose POST /api/v2/workspaces.
 2. Body: `{"name":"Marketing"}` (or with description).

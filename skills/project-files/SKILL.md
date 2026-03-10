@@ -7,7 +7,7 @@ description: Public API project file management (X-API-KEY). Prepare upload/upda
 
 ## Description
 
-Manage files in project directories. This skill documents the **public API** at `/api/v2/projects/{projectId}` (PublicApiProjectFileController). Upload flow: 1) POST prepare with directoryId; 2) PUT file to uploadUrl; 3) POST confirm with fileId. All paths require `projectId`; prepare/prepare-update also need `directoryId`. Authenticate with `X-API-KEY` header.
+Manage files in project directories. This skill documents the **public API** at `/api/v2/projects/{projectId}` (PublicApiProjectFileController). Upload flow: 1) POST prepare with directoryId; 2) PUT file to `upload_url`; 3) POST confirm with `file_id`. All paths require `projectId`; prepare/prepare-update also need `directoryId`. Authenticate with `X-API-KEY` header.
 
 ---
 
@@ -19,28 +19,28 @@ Mirrors `PublicApiProjectFileController` data classes.
 // --- Prepare upload (POST) — 201 ---
 type PrepareFileUploadRequest = {
   path: string;
-  fileName: string;
-  mimeType: string;
+  file_name: string;
+  mime_type: string;
   size: number;
 };
 type PrepareFileUploadResponse = {
-  uploadUrl: string;
-  fileId: string;
-  s3Key: string;
-  expiresAt: string;
+  upload_url: string;
+  file_id: string;
+  s3_key: string;
+  expires_at: string;
 };
 
 // --- Prepare update (POST) ---
 type PrepareUpdateFileRequest = {
   path: string;
-  mimeType?: string | null;
+  mime_type?: string | null;
   size?: number | null;
 };
 type PrepareUpdateFileResponse = {
-  uploadUrl: string;
-  fileId: string;
-  s3Key: string;
-  expiresAt: string;
+  upload_url: string;
+  file_id: string;
+  s3_key: string;
+  expires_at: string;
 };
 
 // --- Confirm (POST) ---
@@ -48,20 +48,20 @@ type ConfirmFileUploadRequest = { metadata?: Record<string, unknown> | null };
 type FileResponse = {
   id: string;
   name: string;
-  fileType: string;
-  mimeType: string;
-  s3Key: string;
+  file_type: string;
+  mime_type: string;
+  s3_key: string;
   size: number;
-  uploadedAt: string;
-  uploadedBy: string;
+  uploaded_at: string;
+  uploaded_by: string;
   status: string;
   metadata: Record<string, unknown> | null;
 };
 
 // --- Download URL (GET), Get file (GET), Delete (DELETE) ---
 type DownloadUrlResponse = {
-  downloadUrl: string;
-  expiresAt: string;
+  download_url: string;
+  expires_at: string;
 };
 ```
 
@@ -75,7 +75,7 @@ Request body: `PrepareFileUploadRequest`. Response (201): `PrepareFileUploadResp
 curl -X POST "$LAYERPROOF_BASE_URL/api/v2/projects/<project_id>/directories/<directory_id>/files/prepare" \
   -H "Content-Type: application/json" \
   -H "X-API-KEY: $LAYERPROOF_API_KEY" \
-  -d '{"path":"/","fileName":"doc.pdf","mimeType":"application/pdf","size":2048}'
+  -d '{"path":"/","file_name":"doc.pdf","mime_type":"application/pdf","size":2048}'
 ```
 
 ---
@@ -88,7 +88,7 @@ Request body: `PrepareUpdateFileRequest`. Response: `PrepareUpdateFileResponse`.
 curl -X POST "$LAYERPROOF_BASE_URL/api/v2/projects/<project_id>/directories/<directory_id>/files/prepare-update" \
   -H "Content-Type: application/json" \
   -H "X-API-KEY: $LAYERPROOF_API_KEY" \
-  -d '{"path":"/doc.pdf","mimeType":"application/pdf","size":2048}'
+  -d '{"path":"/doc.pdf","mime_type":"application/pdf","size":2048}'
 ```
 
 ---
@@ -165,7 +165,7 @@ Base path: `/api/v2/projects/{projectId}`. Replace `project_id`, `directory_id`,
 
 ### 3. Upload flow
 
-Prepare → PUT file to uploadUrl → confirm with fileId. Then use fileId for get/download/delete.
+Prepare → PUT file to `upload_url` → confirm with `file_id`. Then use `file_id` for get/download/delete.
 
 ### 4. Response handling
 
@@ -179,4 +179,3 @@ Prepare → PUT file to uploadUrl → confirm with fileId. Then use fileId for g
 - (if response contains url to show image) please show image and show json response instead of table
 - Always show the **raw JSON response** (verbatim) in a JSON code block.
 - If the response contains a URL for an image, **render/show the image** and also show the **JSON response** (do not convert to a table).
-

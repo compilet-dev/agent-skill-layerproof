@@ -18,13 +18,13 @@ Mirrors `PublicApiJobController` response.
 ```typescript
 // --- Get Job Status (GET) ---
 type JobStatusResponse = {
-  activityId: string;
+  activity_id: string;
   status: 'SCHEDULED' | 'RUNNING' | 'PENDING' | 'DONE' | 'CANCELED';
   message: string;
-  createdAt?: string | null;   // ISO 8601
-  updatedAt?: string | null;   // ISO 8601
-  output?: string | null;      // JSON string when DONE
-  failureReason?: string | null;
+  created_at?: string | null;   // ISO 8601
+  updated_at?: string | null;   // ISO 8601
+  output?: string | null;       // JSON string when DONE
+  failure_reason?: string | null;
 };
 ```
 
@@ -34,7 +34,7 @@ type JobStatusResponse = {
 
 Response: `JobStatusResponse`.
 
-Poll until `status` is `DONE` or `CANCELED`. When DONE, use `output` (JSON string) for results; when failed, use `failureReason`.
+Poll until `status` is `DONE` or `CANCELED`. When DONE, use `output` (JSON string) for results; when failed, use `failure_reason`.
 
 ```bash
 curl "$LAYERPROOF_BASE_URL/api/v2/jobs/<activity_id>" \
@@ -56,13 +56,13 @@ When the user asks to check job status or poll an async operation, do the follow
 ### 2. Build and run
 
 - **Auth**: Include `X-API-KEY: $LAYERPROOF_API_KEY`. Read env vars; if missing, tell the user.
-- **Path**: Use the `activityId` returned from a previous async call (outline generate, batch generate, export, etc.). Run curl and show the result.
+- **Path**: Use the `activity_id` returned from a previous async call (outline generate, batch generate, export, etc.). Run curl and show the result.
 
 ### 3. After response
 
 - If status is SCHEDULED/RUNNING/PENDING, suggest polling again after a few seconds.
 - If DONE, parse `output` if present and summarize the result.
-- If CANCELED or DONE with failureReason, report the outcome.
+- If CANCELED or DONE with `failure_reason`, report the outcome.
 
 ### 4. Response handling
 
@@ -76,4 +76,3 @@ When the user asks to check job status or poll an async operation, do the follow
 - (if response contains url to show image) please show image and show json response instead of table
 - Always show the **raw JSON response** (verbatim) in a JSON code block.
 - If the response contains a URL for an image, **render/show the image** and also show the **JSON response** (do not convert to a table).
-
