@@ -141,6 +141,14 @@
     }
   ],
   "installation": {
+    "npxSkills": {
+      "method": "npx",
+      "command": "npx skills add compilet-dev/agent-skill-layerproof",
+      "selectiveCommand": "npx skills add compilet-dev/agent-skill-layerproof --skill {skillName}",
+      "globalCommand": "npx skills add compilet-dev/agent-skill-layerproof -g",
+      "listCommand": "npx skills add compilet-dev/agent-skill-layerproof --list",
+      "description": "Install via the Skills CLI (npx skills). Auto-detects Claude Code, Cursor, Codex, and OpenCode."
+    },
     "claudeCode": {
       "method": "cli",
       "command": "claude skills install ./marketplace.json",
@@ -150,13 +158,8 @@
       }
     },
     "cursor": {
-      "method": "settings",
-      "settingsKey": "agent.skillPaths",
-      "settingsValue": ["./skills"],
-      "manual": {
-        "description": "Reference SKILL.md files with @ in Cursor chat",
-        "example": "@skills/slide-decks/SKILL.md generate an outline for a product launch"
-      }
+      "method": "npx",
+      "command": "npx skills add compilet-dev/agent-skill-layerproof -a cursor"
     }
   },
   "keywords": [
