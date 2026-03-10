@@ -71,11 +71,12 @@ X-API-KEY: $LAYERPROOF_API_KEY
    claude skills install ./marketplace.json
    ```
 
-4. **Set environment variables** (add to `~/.zshrc` or `~/.bashrc`):
+4. **Set environment variables** (persist for future sessions):
 
    ```bash
-   export LAYERPROOF_BASE_URL=https://api.layerproof.com
-   export LAYERPROOF_API_KEY=your-api-key-here
+   echo 'export LAYERPROOF_BASE_URL=https://api.layerproof.com' >> ~/.zshrc
+   echo 'export LAYERPROOF_API_KEY=your-api-key-here' >> ~/.zshrc
+   source ~/.zshrc
    ```
 
 5. **Start a session** and ask the agent to use a skill:
