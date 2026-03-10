@@ -1,10 +1,12 @@
 ---
 
+type: skill-pack
 name: layerproof-api
-description: AI agent skills for interacting with the Layerproof API including workspaces, projects, slide decks, files, themes, exports, and jobs.
+description: Skill pack for interacting with the Layerproof API including workspaces, projects, slide decks, files, themes, exports, and jobs.
 author: compilet-dev
 version: 1.0.0
-skills:
+
+includes:
 
 * skills/workspaces/SKILL.md
 * skills/projects/SKILL.md
@@ -20,6 +22,22 @@ skills:
 
 # Layerproof API Skill Pack
 
+> ⚠️ **Skill Pack Manifest**
+>
+> This file is **NOT a skill**.
+>
+> It is the **entry point for the Layerproof skill pack**.
+>
+> Individual skills are located in:
+>
+> `skills/*/SKILL.md`
+>
+> AI agents and crawlers should **only index those files as skills**.
+
+---
+
+# Overview
+
 This repository provides a **collection of AI agent skills for the Layerproof API**.
 
 These skills allow AI agents to interact with Layerproof to:
@@ -33,7 +51,7 @@ These skills allow AI agents to interact with Layerproof to:
 * **Export** presentations
 * Monitor **asynchronous jobs**
 
-The agent reads the relevant skill file and generates the correct API requests using `curl`.
+Each skill contains structured instructions that teach an AI agent how to interact with the Layerproof API using `curl`.
 
 ---
 
@@ -41,13 +59,13 @@ The agent reads the relevant skill file and generates the correct API requests u
 
 Before performing any API operations, ensure these environment variables are set:
 
-   ```bash
-   echo 'export LAYERPROOF_BASE_URL=https://api.layerproof.com' >> ~/.zshrc
-   echo 'export LAYERPROOF_API_KEY=your-api-key-here' >> ~/.zshrc
-   source ~/.zshrc
-   ```
+```bash
+echo 'export LAYERPROOF_BASE_URL=https://api.layerproof.com' >> ~/.zshrc
+echo 'export LAYERPROOF_API_KEY=your-api-key-here' >> ~/.zshrc
+source ~/.zshrc
+```
 
-All API requests must include:
+All API requests must include the following header:
 
 ```
 X-API-KEY: $LAYERPROOF_API_KEY
@@ -66,7 +84,7 @@ When a user asks to perform an operation related to Layerproof:
 5. Execute the request using the environment variables.
 6. Display the **raw JSON response** to the user.
 
-If the response contains image URLs, the agent may display them.
+If the response contains image URLs, the agent may render them.
 
 ---
 
@@ -90,9 +108,9 @@ Each module corresponds to a Layerproof API resource.
 
 # Handling Asynchronous Operations
 
-Many Layerproof endpoints run asynchronously.
+Many Layerproof API endpoints run asynchronously.
 
-When a response returns an `activityId`:
+When an API response returns an `activityId`, the agent should:
 
 1. Poll the job status:
 
@@ -112,7 +130,7 @@ status = DONE
 
 # Typical Agent Workflow
 
-Example: Generate a presentation.
+Example workflow for generating a presentation:
 
 1. Create project
 2. Generate outline
@@ -140,10 +158,44 @@ Agents should load the following files when interacting with Layerproof:
 * skills/exports/SKILL.md
 * skills/jobs/SKILL.md
 
-Each file contains:
+Each skill file contains:
 
-* endpoint definitions
-* request/response types
+* API endpoint definitions
+* request and response types
 * curl examples
-* decision logic for the agent
+* agent decision logic
 * response handling rules
+
+---
+
+# Repository Structure
+
+```
+agent-skill-layerproof
+│
+├─ SKILL.md
+├─ marketplace.json
+├─ README.md
+│
+└─ skills
+   ├─ workspaces
+   │   └─ SKILL.md
+   ├─ projects
+   │   └─ SKILL.md
+   ├─ public-files
+   │   └─ SKILL.md
+   ├─ project-files
+   │   └─ SKILL.md
+   ├─ slide-decks
+   │   └─ SKILL.md
+   ├─ slides
+   │   └─ SKILL.md
+   ├─ themes
+   │   └─ SKILL.md
+   ├─ exports
+   │   └─ SKILL.md
+   └─ jobs
+       └─ SKILL.md
+```
+
+---
