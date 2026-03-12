@@ -129,6 +129,25 @@ After prepare: tell the user to PUT the file to `upload_url` with `Content-Type:
 - If the response contains a URL for an image, show the image and the JSON.
 - On error, show the response body and status code.
 
+### 5. Example workflows
+
+**Workflow A — User**: "Upload a reference PDF for outline generation."
+
+1. POST `/api/v2/files/prepare` with `{"file_name":"brief.pdf","mime_type":"application/pdf","size":<bytes>}`; get `upload_url`, `s3_key`, `expires_at`.
+2. User PUTs file to `upload_url` with `Content-Type: application/pdf`. POST `/api/v2/files/confirm` with `{"s3_key":"<s3_key>"}`.
+3. Use this `s3_key` in slide-deck POST `.../outline/generate` body as `file_s3_keys: ["<s3_key>"]`.
+
+**Workflow B — User**: "Upload two reference files (PDF + DOCX), confirm both, then generate an outline that uses them."
+
+1. For first file: prepare → user uploads → confirm; capture `s3_key_1`. For second: prepare → upload → confirm; capture `s3_key_2`.
+2. Hand off to slide-decks: resolve projectId and slideDeckId. POST `.../outline/generate` with `{"prompt":"...", "slide_count":5, "file_s3_keys":["<s3_key_1>","<s3_key_2>"]}`.
+3. Poll jobs for `activity_id`; when DONE, GET deck to show outline that was informed by the references.
+
+**Workflow C — User**: "Get a download URL for a file I uploaded earlier (I have the s3_key), then delete it when done."
+
+1. POST `/api/v2/files/download-url` with `{"s3_key":"<s3_key>","expiry_seconds":3600}`; show `download_url` and `expires_at`.
+2. When user is done: POST `/api/v2/files/delete` with `{"s3_key":"<s3_key>"}`; show success response. Warn that delete is irreversible.
+
 ---
 
 ## Response format (required)

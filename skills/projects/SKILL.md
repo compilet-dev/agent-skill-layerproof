@@ -233,13 +233,24 @@ When the user asks to manage projects, do the following.
 - For 204 responses, indicate success and no body.
 - On error, show the response body and status code.
 
-### 4. Example flow
+### 4. Example workflows
 
-**User**: "Create a project called Q3 Roadmap."
+**Workflow A — User**: "Create a project called Q3 Roadmap."
 
 1. Choose POST `/api/v2/projects`.
 2. Body: `{"name":"Q3 Roadmap","project_kind":"SLIDE_DECK"}`.
 3. Run curl; show JSON. The returned `id` is the project ID; `slide_deck_id` is the associated slide deck.
+
+**Workflow B — User**: "Create a slide deck project in workspace W, then generate an outline for it."
+
+1. Resolve `workspace_id` (e.g. from GET workspaces or user). POST `/api/v2/projects` with `{"name":"...", "project_kind":"SLIDE_DECK", "workspace_id":"<workspace_id>"}`; capture `id` and `slide_deck_id`.
+2. Hand off to slide-decks skill: use `projectId = id` and `slideDeckId = slide_deck_id`; POST `.../projects/{projectId}/slide-deck/{slideDeckId}/outline/generate` with prompt and slide_count; poll jobs; get deck or update outline as needed.
+
+**Workflow C — User**: "List my projects, find the one named 'Launch Deck', export it as PPTX, and if there’s a clone or vote option show me how."
+
+1. GET `/api/v2/projects` with `limit` and optional `cursor`; paginate if needed. Locate project where `name` matches "Launch Deck"; capture `id`.
+2. Hand off to exports skill: POST `.../projects/{id}/exports/pptx`; poll GET `.../exports/{exportId}` until COMPLETED; show `downloadUrl`.
+3. Optionally: POST `.../projects/{id}/clone` to clone, or POST/DELETE `.../projects/{id}/vote` per API; show response and explain usage.
 
 ---
 

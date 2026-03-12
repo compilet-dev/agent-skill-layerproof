@@ -133,13 +133,25 @@ When the user asks to manage workspaces (create, list, get, update, delete), do 
 - For 204 delete, indicate success and no body.
 - On error, show response body and status code.
 
-### 4. Example flow
+### 4. Example workflows
 
-**User**: "Create workspace Marketing."
+**Workflow A — User**: "Create workspace Marketing."
 
 1. Choose POST /api/v2/workspaces.
 2. Body: `{"name":"Marketing"}` (or with description).
 3. Run curl; show JSON. Returned `id` is the workspace ID for get/update/delete.
+
+**Workflow B — User**: "Set up a workspace for Q2, create it if it doesn’t exist, then list my workspaces and show the one I’ll use for new projects."
+
+1. GET `/api/v2/workspaces` with `page`, `page_size`; inspect list for a workspace named "Q2" or similar.
+2. If not found: POST `/api/v2/workspaces` with `{"name":"Q2","description":"Q2 campaigns and decks"}`; capture `id` as `workspace_id`.
+3. If found: use that workspace’s `id`. Optionally GET `/api/v2/workspaces/{id}` to show full details.
+4. Tell user: "Use workspace_id <id> when creating projects (e.g. POST /api/v2/projects with workspace_id in body)."
+
+**Workflow C — User**: "Rename workspace X to 'Marketing 2025' and add a description."
+
+1. Resolve workspace ID (from list or user). PUT `/api/v2/workspaces/{workspaceId}` with `{"name":"Marketing 2025","description":"..."}`.
+2. Run curl; show JSON. Optionally GET the workspace again to confirm name and description.
 
 ---
 

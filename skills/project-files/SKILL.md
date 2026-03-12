@@ -172,6 +172,26 @@ Prepare → PUT file to `upload_url` → confirm with `file_id`. Then use `file_
 - Always show raw JSON in a code block; show image + JSON if image URL present.
 - On error, show body and status code.
 
+### 5. Example workflows
+
+**Workflow A — User**: "Upload a PDF to project X in the root directory."
+
+1. Resolve projectId and directoryId (e.g. root directory from project or list directories). POST `.../directories/{directoryId}/files/prepare` with `{"path":"/","file_name":"brief.pdf","mime_type":"application/pdf","size":<bytes>}`; get `upload_url`, `file_id`, `s3_key`.
+2. Tell user to PUT the file to `upload_url` with `Content-Type: application/pdf`. Then POST `.../files/{file_id}/confirm` with `{}` (or `{"metadata":{}}`).
+3. Show JSON; use `file_id` for later get/download/delete.
+
+**Workflow B — User**: "Upload two reference docs to the project, then use them when generating the slide deck outline."
+
+1. For each file: prepare with path (e.g. `/ref1.pdf`, `/ref2.docx`) → user uploads to `upload_url` → confirm. Capture both `file_id` and `s3_key` (if returned) for each.
+2. If outline generation accepts project file references: pass the project file identifiers (e.g. s3_keys or file_ids) into the slide-deck outline/generate request (e.g. `file_s3_keys` or equivalent). Otherwise use public-files for outline references and keep project files for project-scoped use only.
+3. Hand off to slide-decks: POST outline/generate with the resolved keys; poll job; get deck.
+
+**Workflow C — User**: "Update an existing file in the project (new version) and get a download URL after."
+
+1. Resolve projectId, directoryId, and existing file path. POST `.../directories/{directoryId}/files/prepare-update` with `{"path":"/brief.pdf","mime_type":"application/pdf","size":<new_bytes>}`; get `upload_url`, `file_id`.
+2. User PUTs new content to `upload_url`; then POST `.../files/{file_id}/confirm`. GET `.../files/{file_id}/download-url` to show the user a temporary download link.
+3. On error (e.g. path not found), show response body and suggest verifying path and project/directory IDs.
+
 ---
 
 ## Response format (required)

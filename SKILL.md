@@ -130,17 +130,39 @@ status = DONE
 
 # Typical Agent Workflow
 
-Example workflow for generating a presentation:
+Example workflows (the agent should automatically select the correct skill module for each step).
 
-1. Create project
-2. Generate outline
-3. Poll job status
-4. Batch generate slides
-5. Poll job status
-6. Retrieve slide deck
-7. Export presentation
+## Workflow A: Full presentation from scratch (with reference files and theme)
 
-The agent should automatically select the correct skill module for each step.
+1. **Workspaces** — List workspaces (GET), then create one if needed (POST) or resolve `workspace_id` from list.
+2. **Projects** — Create project (POST) with `name`, `project_kind: "SLIDE_DECK"`, optional `workspace_id`; capture `id` and `slide_deck_id`.
+3. **Public files** (optional) — If the user provides reference docs: POST `/api/v2/files/prepare` → user PUTs file to `upload_url` → POST `/api/v2/files/confirm` with `s3_key`; collect `s3_key`(s) for outline.
+4. **Themes** (optional) — List themes (GET); if user wants a new look: POST `/api/v2/themes/generate` with `prompt` → poll **Jobs** until DONE → note `theme_id`.
+5. **Slide decks** — POST `.../outline/generate` with `prompt`, `slide_count`, optional `file_s3_keys`, `language`; capture `activity_id`.
+6. **Jobs** — Poll `GET /api/v2/jobs/{activity_id}` until `status` is DONE (or CANCELED); on failure, report `failure_reason`.
+7. **Slide decks** — GET deck to read `outline`; optionally PUT `.../outline` to tweak sections (title, sections, key_points, visual_suggestion).
+8. **Slide decks** — If theme was generated, PUT `.../settings` with `theme_id` (or use apply-theme endpoint per skill). Then POST `.../batch-generate` (optionally with `generation_type`, `aspect_ratio`); capture `activity_id`.
+9. **Jobs** — Poll `GET /api/v2/jobs/{activity_id}` until DONE.
+10. **Slide decks** — GET deck again; if a single slide needs regeneration, POST `.../slides/{sectionId}/generate-transcript` or `.../generate-image` etc., then poll job.
+11. **Slides** (optional) — For a specific slide: POST image-edit or object-removal → poll job → POST accept-image-edit with `live_object_id`.
+12. **Exports** — POST `.../projects/{projectId}/exports/pptx` (or png); capture `exportId`; poll GET `.../exports/{exportId}` until COMPLETED; present `downloadUrl` to user.
+
+## Workflow B: Multi-format export and error handling
+
+1. **Projects** — GET project by ID (or list and pick) to ensure it exists and has `slide_deck_id`.
+2. **Slide decks** — GET deck; confirm `metadata.completed_slides` meets expectations before export.
+3. **Exports** — Start PNG export (POST `.../exports/png`); get `exportId`. In parallel or after, start PPTX export (POST `.../exports/pptx`); get second `exportId`.
+4. **Exports** — Poll each `GET .../exports/{exportId}` until status is COMPLETED or FAILED. If FAILED, show `errorMessage` and suggest retry or check project. When COMPLETED, show `downloadUrl` and `expiresAt`.
+5. If user cancels: POST `.../exports/{exportId}/cancel` for in-progress exports.
+
+## Workflow C: Project files and outline with project-scoped assets
+
+1. **Projects** — Create or get project; note `project_id`. Get or create a directory in the project (per project-files API if list directories exists) or use a known `directory_id`.
+2. **Project files** — POST prepare with `path`, `file_name`, `mime_type`, `size` → user uploads to `upload_url` → POST confirm with `file_id`. Optionally GET file or download-url to verify.
+3. **Slide decks** — Use project’s `slide_deck_id`; generate outline with `file_s3_keys` from project file S3 keys (if API accepts them) or use public files flow and pass `file_s3_keys` from public prepare/confirm.
+4. Continue with outline → poll job → update outline → batch generate → poll → export as in Workflow A.
+
+The agent should automatically select the correct skill module for each step and handle polling, error responses, and multi-step dependencies.
 
 ---
 

@@ -489,18 +489,46 @@ Base path: `/api/v2/social-campaigns`. All require `X-API-KEY`.
 - If the response contains image URLs, show images and the JSON.
 - On error (4xx/5xx), show the response body and status code; suggest fixing API key, IDs, or request body.
 
-### 5. Example flow
+### 5. Show preview images for social posts
 
-**User**: "Create a social campaign and generate 3 topics from a prompt."
+When presenting social campaign data that includes **posts** or **platform-specific content**, the agent **must** show preview images so the user can see how posts will look.
+
+- **Get campaign with posts** (GET `.../social-campaigns/{campaign_id}`): If the response includes per-post or per-platform image URLs (e.g. in `posts[]`, or in platform post details such as `image_url`, `image_path`, `preview_url`, or similar), **render each image** as a preview. Label each preview with the post topic/title and platform (e.g. "Post 1 — LinkedIn", "Post 2 — Instagram") when multiple platforms or posts exist. Then show the raw JSON in a code block.
+- **After generate platform post or edit platform image**: When you fetch the campaign or post to show the result (e.g. GET campaign by ID or a dedicated get-platform-post endpoint), **display the preview image(s)** for the updated post/platform. Do not only show JSON when image URLs are present — show the images first or alongside, then the JSON.
+- **Listing or comparing posts**: If the user asks to "show my posts", "preview the campaign", or "show how the LinkedIn posts look", resolve the campaign and any endpoints that return platform post assets, then **show all available preview images** (one per post and/or per platform) with clear labels, followed by the JSON.
+- If the API returns a full URL (e.g. presigned or `image_url`), **render/show the image** in the agent response. If it returns only a path, build the full URL from `LAYERPROOF_BASE_URL` or use a documented download/preview endpoint if available, then show the image.
+
+### 6. Example workflows
+
+**Workflow A — User**: "Create a social campaign and generate 3 topics from a prompt."
 
 1. POST `/api/v2/social-campaigns` with `{"name":"My Campaign"}`; get `campaign_id` and `campaign_live_object_id`.
 2. POST `.../generate` with `{"prompt":"...", "target_topic_count":3}`; get `activity_id`.
 3. Tell user to poll `GET /api/v2/jobs/{activity_id}` until DONE, then GET campaign by ID to see posts.
 
+**Workflow B — User**: "Full campaign: create campaign, generate topics, reorder them, generate LinkedIn and Instagram for the first two posts, then export the campaign as ZIP."
+
+1. POST `/api/v2/social-campaigns` with `{"name":"Q2 Launch", "description":"..."}`; capture `campaign_id`.
+2. POST `.../generate` with `{"prompt":"...", "target_topic_count":4, "tone_config": {...}}`; get `activity_id`.
+3. Poll `GET /api/v2/jobs/{activity_id}` until DONE. If `failure_reason` present, report and stop.
+4. GET `.../social-campaigns/{campaign_id}`; from `posts` collect `post_id` and desired order (e.g. swap first two).
+5. PUT `.../reorder` with `{"topic_ids": [id2, id1, id3, id4]}` so order matches the desired sequence.
+6. For first post: POST `.../posts/{post_id_1}/generate-platform` with `{"platform":"LINKEDIN"}`; capture `activity_id_1`. For second post: same with `LINKEDIN`, then repeat for `INSTAGRAM_POST` for both if needed. Run and capture each `activity_id`.
+7. Poll each `GET /api/v2/jobs/{activity_id}` until DONE (handle multiple jobs; if any fail, report which post/platform failed).
+8. Optional: PUT `.../posts/{post_id}/platforms/LINKEDIN` to tweak `caption` or `hashtags` for one or more posts.
+9. POST `.../social-campaigns/{campaign_id}/exports/zip`; get `export_id`.
+10. Poll `GET .../social-campaigns/{campaign_id}/exports/{export_id}` until `status` is COMPLETED; show `download_url` (or FAILED and `error_message`).
+
+**Workflow C — User**: "Edit the Instagram image for post X with instruction 'add sunset background'."
+
+1. Resolve `campaign_id` and `post_id` (from list campaigns → get campaign with posts, or user input).
+2. POST `.../posts/{post_id}/image-edit` with `{"instruction":"Add a sunset background", "platform":"INSTAGRAM_POST"}`; get `activity_id` and optionally `live_object_id`.
+3. Poll `GET /api/v2/jobs/{activity_id}` until DONE; the edited image is auto-applied (no separate accept step for this API). GET campaign/post to show updated asset.
+
 ---
 
 ## Response format (required)
 
-- (if response contains url to show image) please show image and show json response instead of table
+- **Preview images for social posts**: When the response contains image URLs for social posts (campaign posts, platform posts, or post exports), **always show the preview images** — render each image and label it (e.g. post index, topic, platform). Then show the raw JSON in a code block. Do not convert image-bearing responses to a table; show images + JSON.
+- For any other response that contains a URL for an image, **render/show the image** and also show the **JSON response** (do not convert to a table).
 - Always show the **raw JSON response** (verbatim) in a JSON code block.
-- If the response contains a URL for an image, **render/show the image** and also show the **JSON response** (do not convert to a table).
