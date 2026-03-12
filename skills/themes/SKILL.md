@@ -168,14 +168,27 @@ When the user asks to work with themes (list, get, generate, apply), do the foll
 - If the response contains a URL for an image (e.g. `preview_url`), show the image and the JSON.
 - On error (4xx/5xx), show the response body and status code; suggest fixing missing/invalid API key, IDs, or request body.
 
-### 5. Example flow
+### 5. Example workflows
 
-**User**: "Generate a theme with prompt: minimal dark mode."
+**Workflow A — User**: "Generate a theme with prompt: minimal dark mode."
 
 1. Choose `POST /api/v2/themes/generate`.
 2. Build body: `{"prompt":"minimal dark mode"}`.
 3. Run: `curl -X POST "$LAYERPROOF_BASE_URL/api/v2/themes/generate" -H "Content-Type: application/json" -H "X-API-KEY: $LAYERPROOF_API_KEY" -d '{"prompt":"minimal dark mode"}'`.
 4. Show the JSON response; if it contains `activity_id`, mention they can poll `/api/v2/jobs/{activityId}` for status and use `theme_id` once done.
+
+**Workflow B — User**: "List themes, generate a new 'corporate blue' theme, wait for it to finish, then apply it to my slide deck and regenerate slides."
+
+1. GET `/api/v2/themes` with optional `limit`, `offset`, `search`; show list. User may pick existing or request new.
+2. POST `/api/v2/themes/generate` with `{"prompt":"corporate blue"}`; capture `activity_id` and `theme_id`.
+3. Poll `GET /api/v2/jobs/{activity_id}` until status is DONE (or CANCELED). If DONE, theme is ready; if failed, report `failure_reason`.
+4. Resolve projectId and slideDeckId (projects + slide-deck). POST or PUT the slide-deck theme/settings endpoint with `theme_id` (e.g. PUT `.../slide-deck/.../settings` with `{"theme_id":"<theme_id>"}`).
+5. If the API supports "apply theme and regenerate": use that endpoint with `regenerate_slides: true`; capture `activity_id` and poll jobs until DONE. Otherwise: apply theme then use slide-deck batch-generate; poll that job.
+
+**Workflow C — User**: "I have a theme ID; apply it to deck X and only update the look (no slide regeneration)."
+
+1. Resolve slideDeckId from project. PUT `.../settings` with `{"theme_id":"<theme_id>"}` (or apply-theme without regeneration).
+2. Confirm with GET deck; `slide_deck.theme` or similar should reflect the new theme. No job polling needed if no regeneration.
 
 ---
 

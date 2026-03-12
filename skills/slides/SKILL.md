@@ -238,14 +238,28 @@ All paths require `projectId` and `slideId` (replace placeholders with actual UU
 - If the response contains a URL for an image (e.g. `image_path`), show the image and the JSON.
 - On error (4xx/5xx), show the response body and status code; suggest fixing API key, projectId/slideId, or request body.
 
-### 5. Example flow
+### 5. Example workflows
 
-**User**: "Edit slide image in project X, slide Y: make the background darker."
+**Workflow A — User**: "Edit slide image in project X, slide Y: make the background darker."
 
 1. Choose `POST /api/v2/projects/{projectId}/slides/{slideId}/image-edit`.
 2. Resolve projectId and slideId (from user or ask).
 3. Build body: `{"instruction":"Make the background darker","input_image_path":"/path/to/slide/image"}` (user may need to provide image path).
 4. Run curl; show JSON. Mention polling jobs with `activity_id` and calling accept-image-edit with `live_object_id` when done.
+
+**Workflow B — User**: "Edit two slides: darker background on slide 1, remove the logo from slide 3; then revert slide 1 if I don’t like it."
+
+1. Resolve projectId; get slide ids from slide-deck GET deck (e.g. `slides[0].id`, `slides[2].id`).
+2. For slide 1: POST `.../slides/{slideId1}/image-edit` with `{"instruction":"Make the background darker"}`; capture `activity_id_1` and `live_object_id_1`. For slide 3: POST `.../slides/{slideId3}/object-removal` with region/instruction; capture `activity_id_3` and `live_object_id_3`.
+3. Poll `GET /api/v2/jobs/{activity_id_1}` and `.../jobs/{activity_id_3}` until both DONE. If either fails, report which slide and reason.
+4. POST `.../slides/{slideId1}/accept-image-edit` with `{"live_object_id":"<live_object_id_1>"}`; POST `.../slides/{slideId3}/accept-image-edit` with `{"live_object_id":"<live_object_id_3>"}`. Show updated slide images (GET deck or slide detail).
+5. If user says "revert slide 1": GET slide history (if available) for slideId1 to get `history_entry_id`; POST `.../slides/{slideId1}/revert` with `{"history_entry_id":"<id>"}`. Confirm with GET deck.
+
+**Workflow C — User**: "Extract text from slide 2 and replace the old text (OCR + inpainting)."
+
+1. Resolve projectId and slideId for slide 2. POST `.../slides/{slideId}/extract-text` (body per API); capture `activity_id`.
+2. Poll `GET /api/v2/jobs/{activity_id}` until DONE. When DONE, `output` may contain extracted text or updated asset reference.
+3. If a follow-up accept or apply step is required (e.g. accept-image-edit), use the returned `live_object_id`; otherwise show the result (e.g. updated slide or transcript) from GET deck.
 
 ---
 

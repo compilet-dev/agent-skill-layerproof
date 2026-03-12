@@ -410,14 +410,32 @@ Other endpoints (improve section, generate-manual, visual style, transcript vers
 - If the response contains image URLs (e.g. in get deck `slides[].image_url`), show images and the JSON.
 - On error (4xx/5xx), show the response body and status code; suggest fixing API key, projectId/slideDeckId/sectionId, or request body.
 
-### 5. Example flow
+### 5. Example workflows
 
-**User**: "Generate an outline for a product launch deck in project X."
+**Workflow A — User**: "Generate an outline for a product launch deck in project X."
 
 1. Resolve projectId and slideDeckId (e.g. from GET projects, then `project.slide_deck_id`).
 2. Choose `POST .../outline/generate`.
 3. Build body: `{"prompt":"Product launch deck","slide_count":5}`.
 4. Run curl; show JSON. Tell user to poll `GET /api/v2/jobs/{activityId}` and then call get deck or update outline as needed.
+
+**Workflow B — User**: "Full deck: outline from a prompt and reference PDF, then tweak the outline, apply a theme, batch generate slides, and fix one slide’s image."
+
+1. Resolve projectId and slideDeckId. Get `file_s3_keys` from public-files (prepare → upload → confirm) or project-files if the API accepts them for outline.
+2. POST `.../outline/generate` with `{"prompt":"Product launch with pricing","slide_count":6,"file_s3_keys":["<s3_key>"],"language":"en"}`; capture `activity_id`.
+3. Poll `GET /api/v2/jobs/{activity_id}` until DONE. On failure, report and stop.
+4. GET deck; from `outline.sections` identify a section to change. PUT `.../outline` with `title` and updated `sections` (e.g. edit `section_title`, `key_points`, `visual_suggestion` for one section).
+5. If user wants a theme: use themes skill to resolve `theme_id`; PUT `.../settings` with `{"theme_id":"<theme_id>"}` (or apply-theme endpoint per API).
+6. POST `.../batch-generate` with optional `generation_type`, `aspect_ratio`, `speaking_style`; capture `activity_id`.
+7. Poll `GET /api/v2/jobs/{activity_id}` until DONE.
+8. GET deck; check `metadata.completed_slides` and `slides[].generation_status`. If one slide’s image is wrong, POST `.../slides/{sectionId}/generate-image` (or generate-content) with section id; poll that job until DONE; GET deck again to show result.
+
+**Workflow C — User**: "Duplicate a section in the outline and regenerate slides for the new section only."
+
+1. GET deck; from `outline.sections` get section ids and order. Determine source section to duplicate.
+2. POST `.../sections/duplicate` with `section_id` (or equivalent); capture new `section_id` from response or GET deck again.
+3. PUT `.../outline` to include the new section in `sections` with correct order and titles.
+4. POST `.../slides/{newSectionId}/generate-transcript` and/or `generate-image` (or batch-generate if it supports partial); poll job(s); GET deck to confirm.
 
 ---
 
