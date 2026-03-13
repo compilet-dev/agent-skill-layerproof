@@ -17,13 +17,18 @@ Mirrors `PublicApiSlideDeckController` data classes.
 
 ```typescript
 // --- Outline section (used in UpdateOutlineRequest and responses) ---
+type PublicApiSlideIconAsset = { query: string; slot?: string | null };
+type PublicApiSlideImageAsset = { prompt: string; slot?: string | null };
 type PublicApiOutlineSection = {
   id: string;
-  section_title: string;
-  content?: string | null;
+  section_title: string;   // 1–500 chars
+  content?: string | null;  // max 5000
   key_points?: string[] | null;
-  visual_suggestion?: string | null;
-  speaker_notes?: string | null;
+  visual_suggestion?: string | null;  // max 500
+  speaker_notes?: string | null;       // max 2000
+  layout?: string | null;
+  icon_assets?: PublicApiSlideIconAsset[];
+  image_assets?: PublicApiSlideImageAsset[];
 };
 
 // --- Generate Outline (POST) — async ---
@@ -33,6 +38,9 @@ type GenerateOutlineRequest = {
   language?: string;            // 2–10 chars, e.g. "en"
   file_s3_keys?: string[];      // from POST /api/v2/files/prepare
   web_search_enabled?: boolean;
+  text_detail_level?: string | null;
+  tone?: string | null;
+  outline_type?: string | null;
 };
 type GenerateOutlineResponse = {
   activity_id: string;
@@ -43,8 +51,8 @@ type GenerateOutlineResponse = {
 
 // --- Update Outline (PUT) ---
 type UpdateOutlineRequest = {
-  title: string;
-  sections: PublicApiOutlineSection[];
+  title: string;                // 1–500 chars
+  sections: PublicApiOutlineSection[];  // at least one required
 };
 type PublicApiOutline = {
   id: string;
@@ -60,6 +68,9 @@ type PublicApiSlideDeck = {
   id: string;
   project_id: string;
   title: string;
+  description?: string | null;
+  deck_type?: string | null;
+  slide_numbers?: number | null;
   aspect_ratio: string;
   theme?: string | null;
   outline_generation_live_object_id?: string | null;
@@ -71,10 +82,15 @@ type PublicApiSlide = {
   index: number;
   section_id: string;
   section_title: string;
+  content?: string | null;
+  key_points?: string[] | null;
+  visual_suggestion?: string | null;
+  speaker_notes?: string | null;
   transcript?: string | null;
   image_url?: string | null;
   image_expires_at?: string | null;
   generation_status: string;
+  error_message?: string | null;
   created_at: string;
   updated_at: string;
 };
@@ -95,10 +111,10 @@ type GetDeckResponse = {
 type BatchGenerateSlidesRequest = {
   generation_type?: string;          // default "BOTH"
   speaking_style?: string | null;
-  target_duration_minutes?: number | null;
+  target_duration_minutes?: number | null;  // min 1
   transcript_tone?: string | null;
   aspect_ratio?: string | null;
-  output_language?: string | null;
+  output_language?: string | null;   // 2–10 chars
   text_detail_level?: string | null;
   tone?: string | null;
 };
@@ -114,8 +130,9 @@ type BatchGenerateSlidesResponse = {
 type GenerateSlideContentRequest = {
   slide_section_id: string;
   speaking_style?: string | null;
-  target_duration_minutes?: number | null;
-  generation_type?: string | null;
+  target_duration_minutes?: number | null;  // min 1
+  transcript_tone?: string | null;
+  generation_type?: string | null;   // default "TRANSCRIPT_AND_IMAGE"
 };
 type GenerateSlideContentResponse = {
   activity_id: string;
@@ -129,7 +146,7 @@ type GenerateSlideContentResponse = {
 type GenerateSlideTranscriptRequest = {
   slide_section_id: string;
   speaking_style?: string | null;
-  target_duration_minutes?: number | null;
+  target_duration_minutes?: number | null;  // min 1
   transcript_tone?: string | null;
 };
 type GenerateSlideTranscriptResponse = {

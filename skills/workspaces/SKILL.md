@@ -18,19 +18,25 @@ Mirrors `PublicApiWorkspaceController` data classes.
 ```typescript
 // --- Create (POST) — 201 ---
 type PublicApiCreateWorkspaceRequest = {
-  name: string;        // required, max 255
+  name: string;           // required, 1–255 chars
   description?: string | null;
+  default_theme_id?: string | null;  // optional theme UUID
 };
 type PublicApiWorkspaceResponse = {
   id: string;
+  user_id: string;
   name: string;
   description: string | null;
+  default_theme_id: string | null;
+  shared_working_dir_live_object_id: string;
   project_count: number;
-  created_at: string;   // ISO 8601
-  updated_at: string;   // ISO 8601
+  created_at: string;     // ISO 8601
+  updated_at: string;    // ISO 8601
+  thumbnail_url?: string | null;
 };
 
 // --- List (GET) ---
+// Query: page (default 20), page_size (default 20, max 100)
 type PublicApiWorkspaceListResponse = {
   data: PublicApiWorkspaceResponse[];
   total: number;
@@ -40,8 +46,9 @@ type PublicApiWorkspaceListResponse = {
 
 // --- Update (PUT) ---
 type PublicApiUpdateWorkspaceRequest = {
-  name?: string | null;   // max 255
+  name?: string | null;   // max 255 if provided
   description?: string | null;
+  default_theme_id?: string | null;  // optional theme UUID
 };
 ```
 
@@ -62,7 +69,7 @@ curl -X POST "$LAYERPROOF_BASE_URL/api/v2/workspaces" \
 
 ## List Workspaces
 
-Query: `page` (default 0), `page_size` (default 20, max 100). Response: `PublicApiWorkspaceListResponse`.
+Query: `page` (default 20), `page_size` (default 20, max 100). Response: `PublicApiWorkspaceListResponse`.
 
 ```bash
 curl "$LAYERPROOF_BASE_URL/api/v2/workspaces?page=0&page_size=20" \

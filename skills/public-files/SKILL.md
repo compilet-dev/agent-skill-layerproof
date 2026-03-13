@@ -18,9 +18,9 @@ Mirrors `PublicApiFileController` (/api/v2/files) data classes.
 ```typescript
 // --- Prepare (POST) ---
 type PrepareFileUploadRequest = {
-  file_name: string;
+  file_name: string;   // max 255 chars
   mime_type: string;
-  size: number;  // 1 to 20*1024*1024
+  size: number;        // 1 to 20*1024*1024
 };
 type PrepareFileUploadResponse = {
   upload_url: string;

@@ -33,15 +33,23 @@ Mirrors `PublicApiProjectController` data classes.
 type PublicApiCreateProjectRequest = {
   name: string;                   // required, 1–255 chars
   description?: string | null;    // max 10000 chars
+  status?: string | null;         // e.g. "DRAFT"; defaults to DRAFT if omitted
+  tags?: string[] | null;
   metadata?: Record<string, any> | null;
   project_kind?: "SLIDE_DECK" | "GENERIC" | "MINDMAP" | "THEME" | "BLOG_POST" | "SOCIAL_CAMPAIGN";  // default: SLIDE_DECK
+  workspace_id?: string | null;   // UUID
+  theme_id?: string | null;       // UUID; optional theme for slide deck
+  aspect_ratio?: string | null;   // e.g. "16:9"
 };
 
 // --- Update (PUT) ---
 type PublicApiUpdateProjectRequest = {
   name?: string | null;           // 1–255 chars
   description?: string | null;    // max 10000 chars
+  status?: string | null;
+  tags?: string[] | null;
   metadata?: Record<string, any> | null;
+  workspace_id?: string | null;   // UUID
   is_public?: boolean | null;
 };
 
@@ -60,6 +68,10 @@ type PublicApiProjectResponse = {
   project_kind: string;           // e.g. "SLIDE_DECK"
   metadata: Record<string, any>;
   slide_deck_id: string | null;
+  workspace_id?: string | null;   // UUID
+  thumbnail_url?: string | null;  // optional preview image URL
+  slide_deck_type?: string | null;  // e.g. "PRESENTATION", "SOCIAL_POST", "WEBPAGE", "VIDEO"
+  tags: string[];
   created_at: string;             // ISO 8601
   updated_at: string;             // ISO 8601
   is_public: boolean;

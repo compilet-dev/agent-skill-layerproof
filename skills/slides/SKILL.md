@@ -16,7 +16,8 @@ Modify slides after generation. This skill documents the **public API** at `/api
 Mirrors `PublicApiSlideController` (/api/v2/projects/{projectId}/slides) data classes.
 
 ```typescript
-// Shared: cropped region for region-based editing
+// Shared: cropped region for region-based editing. Must lie fully within image bounds.
+// Constraints: x >= 0, y >= 0, width > 0, height > 0; x + width <= image width, y + height <= image height.
 type CroppedRegion = {
   x: number;
   y: number;
@@ -26,9 +27,9 @@ type CroppedRegion = {
 
 // --- Edit Slide Image (POST) — async, poll jobs ---
 type SlideImageEditRequest = {
-  /** AI instruction for the edit (required) */
+  /** AI instruction for the edit (required, non-blank) */
   instruction: string;
-  /** Path to input image in project working dir (required) */
+  /** Path to input image in project working dir (required, non-blank) */
   input_image_path: string;
   /** Optional extra reference image paths */
   other_reference_image_paths?: string[];
@@ -38,19 +39,20 @@ type SlideImageEditRequest = {
 
 // --- Accept Image Edit (POST) ---
 type AcceptImageEditRequest = {
-  live_object_id: string;   // UUID from image-edit or object-removal response
+  live_object_id: string;   // UUID from image-edit or object-removal response (required)
   target_node_id?: string;
+  override_image_path?: string;  // Optional path to use instead of workflow output
 };
 
 // --- Revert Slide (POST) ---
 type RevertSlideRequest = {
-  history_entry_id: string;  // UUID from slide history
+  history_entry_id: string;  // UUID from slide history (required)
   node_id?: string;
 };
 
 // --- Object Removal (POST) — async, poll jobs ---
 type ObjectRemovalRequest = {
-  input_image_path: string;
+  input_image_path: string;  // required, non-blank
   mask_path?: string;
   cropped_region?: CroppedRegion;
 };
@@ -66,7 +68,7 @@ type SaveKonvaNodesRequest = {
   konva_nodes: Record<string, unknown>;  // required
   konva_order: string[];                  // required
   flattened_image_path?: string;
-  base_snapshot_id?: string;
+  base_snapshot_id?: string;  // UUID, optional
 };
 
 // --- Responses ---
@@ -77,7 +79,7 @@ type TriggerWorkflowResponse = {
 };
 
 type AcceptImageEditResponse = {
-  id: string;
+  id: string;             // slide UUID
   slide_section_id: string;
   image_path: string | null;
   status: string;

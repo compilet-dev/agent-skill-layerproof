@@ -20,7 +20,12 @@ Mirrors `PublicApiSocialCampaignController` data classes.
 type PublicApiCreateCampaignRequest = {
   name: string;                    // 1–255 chars, required
   description?: string | null;     // max 10000
+  status?: string | null;          // "DRAFT" | "ACTIVE" | "PENDING", default "DRAFT"
+  tags?: string[] | null;
+  metadata?: Record<string, unknown> | null;
   workspace_id?: string | null;
+  theme_id?: string | null;
+  aspect_ratio?: string | null;    // "16:9" | "4:3" | "1:1", optional
 };
 type PublicApiCampaignResponse = {
   campaign_id: string;
@@ -32,6 +37,7 @@ type PublicApiCampaignResponse = {
 };
 
 // --- List Campaigns (GET) ---
+// Query: limit (default 20, max 100), cursor (optional)
 type PublicApiCampaignListResponse = {
   data: PublicApiCampaignResponse[];
   next_cursor?: string | null;
@@ -71,8 +77,11 @@ type PublicApiCampaignWithPostsResponse = {
 
 // --- Update Campaign (PUT) ---
 type PublicApiUpdateCampaignRequest = {
-  name?: string | null;            // 1–255 chars
+  name?: string | null;            // 1–255 chars if provided
   description?: string | null;     // max 10000
+  status?: string | null;          // "DRAFT" | "ACTIVE" | "PENDING"
+  tags?: string[] | null;
+  metadata?: Record<string, unknown> | null;
   workspace_id?: string | null;
 };
 
@@ -99,7 +108,7 @@ type PublicApiGenerateCampaignRequest = {
   theme_id?: string | null;
   tone_config?: PublicApiToneConfig | null;
   reference_file_paths?: string[] | null;
-  web_search_enabled?: boolean;
+  web_search_enabled?: boolean;     // default false
   target_topic_count?: number | null;
 };
 type PublicApiGenerateCampaignResponse = {
@@ -138,7 +147,7 @@ type UpdateTopicRequest = {
 
 // --- Reorder Topics (PUT) ---
 type PublicApiReorderRequest = {
-  topic_ids: string[];               // required, must match campaign topics
+  topic_ids: string[];               // required, non-empty, UUIDs must match campaign topics
 };
 type ReorderTopicsResponse = {
   topic_ids: string[];
@@ -148,7 +157,7 @@ type ReorderTopicsResponse = {
 
 // --- Generate Platform Post (POST) — async ---
 type PublicApiGeneratePlatformPostRequest = {
-  platform: string;                 // required: INSTAGRAM_POST, INSTAGRAM_STORY, LINKEDIN, TWITTER_X, FACEBOOK, TIKTOK
+  platform: string;                 // required: "INSTAGRAM_POST" | "INSTAGRAM_STORY" | "LINKEDIN" | "TWITTER_X" | "FACEBOOK" | "TIKTOK"
 };
 type PublicApiGeneratePlatformPostResponse = {
   platform_post_live_object_id: string;
@@ -171,17 +180,17 @@ type UpdatePlatformPostResponse = {
 
 // --- Edit Platform Image (POST) — async ---
 type CroppedRegion = {
-  x: number;
+  x: number;                        // pixels
   y: number;
   width: number;
   height: number;
 };
 type EditPlatformImageRequest = {
   instruction: string;              // required
-  input_image_path?: string | null;   // omit to use current platform post image
-  platform: string;                 // required
+  input_image_path?: string | null; // omit to use current platform post image
+  platform: string;                 // required: "INSTAGRAM_POST" | "INSTAGRAM_STORY" | "LINKEDIN" | "TWITTER_X" | "FACEBOOK" | "TIKTOK"
   other_reference_image_paths?: string[] | null;
-  cropped_region?: CroppedRegion | null;
+  cropped_region?: CroppedRegion | null;  // coordinates in native image pixels
 };
 type EditPlatformImageResponse = {
   live_object_id: string;
@@ -198,11 +207,18 @@ type PublicApiCampaignExportStartedResponse = {
 // --- Get Export Status (GET) ---
 type PublicApiCampaignExportStatusResponse = {
   export_id: string;
-  status: string;                   // IN_PROGRESS | COMPLETED | FAILED
+  status: string;                   // "IN_PROGRESS" | "COMPLETED" | "FAILED"
   download_url?: string | null;
   expires_at?: string | null;
   file_size_bytes?: number | null;
   error_message?: string | null;
+};
+
+// --- Export Platform Post PNG (POST) ---
+type PublicApiPlatformPostExportResponse = {
+  platform: string;
+  download_url: string;
+  expires_at: string;
 };
 ```
 
@@ -223,7 +239,7 @@ curl -X POST "$LAYERPROOF_BASE_URL/api/v2/social-campaigns" \
 
 ## List Campaigns
 
-Query: `limit` (default 20, max 100), `cursor` (optional). Response: `PublicApiCampaignListResponse`.
+Query: `limit` (default 20, max 100), `cursor` (optional). Response: `PublicApiCampaignListResponse`. Pagination uses `next_cursor` from the previous response.
 
 Cursor-paginated list of campaigns owned by the authenticated user.
 
@@ -443,6 +459,19 @@ curl "$LAYERPROOF_BASE_URL/api/v2/social-campaigns/<campaign_id>/exports/<export
 
 ---
 
+## Export Platform Post PNG
+
+Path: `campaign_id`, `post_id`, `platform`. Response: `PublicApiPlatformPostExportResponse`.
+
+Returns a direct download URL for the platform post image as PNG (single platform, synchronous).
+
+```bash
+curl -X POST "$LAYERPROOF_BASE_URL/api/v2/social-campaigns/<campaign_id>/posts/<post_id>/platforms/LINKEDIN/exports/png" \
+  -H "X-API-KEY: $LAYERPROOF_API_KEY"
+```
+
+---
+
 ## Agent behavior
 
 When the user asks to work with social campaigns (campaigns, topics, posts, platform posts, exports), do the following.
@@ -470,6 +499,7 @@ Base path: `/api/v2/social-campaigns`. All require `X-API-KEY`.
 | Export campaign ZIP | `/api/v2/social-campaigns/{campaign_id}/exports/zip` | POST |
 | Export post ZIP | `/api/v2/social-campaigns/{campaign_id}/posts/{post_id}/exports/zip` | POST |
 | Get export status | `/api/v2/social-campaigns/{campaign_id}/exports/{export_id}` | GET |
+| Export platform post PNG | `/api/v2/social-campaigns/{campaign_id}/posts/{post_id}/platforms/{platform}/exports/png` | POST |
 
 ### 2. Build and run the request
 
