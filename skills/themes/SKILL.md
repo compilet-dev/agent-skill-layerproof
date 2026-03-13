@@ -17,7 +17,7 @@ Mirrors `PublicThemeController` (/api/v2/themes) data classes.
 
 ```typescript
 // --- List Themes (GET) ---
-// Query: offset?: number (default 0), limit?: number (default 20), search?: string
+// Query: offset (default 0), limit (default 20), search (optional)
 type PublicThemeListResponse = {
   data: PublicThemeResponse[];
   total: number;
@@ -30,39 +30,34 @@ type PublicThemeResponse = {
   id: string;
   name: string;
   description: string | null;
-  visibility: string;
+  visibility: string;       // "PRIVATE" | "SYSTEM" | "SHARED"
   preview_url: string;
-  created_at: string;   // ISO 8601
-  updated_at: string;   // ISO 8601
+  created_at: string;       // ISO 8601
+  updated_at: string;      // ISO 8601
 };
 
-// --- Generate Theme (POST) — PublicGenerateThemeRequest / PublicGenerateThemeResponse ---
+// --- Generate Theme (POST) — async ---
 type PublicGenerateThemeRequest = {
-  /** Theme generation prompt (required, max 5000 characters) */
-  prompt: string;
-  /** Optional THEME project ID; if omitted, a project is created automatically */
-  project_id?: string;
+  prompt: string;           // required, 1–5000 chars
+  project_id?: string | null;  // optional THEME project UUID; if omitted, a project is created automatically
 };
-
 type PublicGenerateThemeResponse = {
-  activity_id: string;  // UUID – poll GET /api/v2/jobs/{activityId}
-  theme_id: string;     // UUID
-};
-
-// --- Apply Theme (POST) — PublicApplyThemeRequest / PublicApplyThemeResponse ---
-type PublicApplyThemeRequest = {
-  slide_deck_id: string;   // UUID
+  activity_id: string;      // UUID – poll GET /api/v2/jobs/{activity_id}
   theme_id: string;        // UUID
-  /** If true, triggers batch image regeneration; poll activity_id when set */
-  regenerate_slides?: boolean;  // default false
 };
 
+// --- Apply Theme (POST) ---
+type PublicApplyThemeRequest = {
+  slide_deck_id: string;   // UUID, required
+  theme_id: string;        // UUID, required
+  regenerate_slides?: boolean;  // default false; if true, triggers batch image regeneration – poll activity_id
+};
 type PublicApplyThemeResponse = {
   theme_id: string;
   theme_name: string;
   slide_deck_id: string;
-  applied: boolean;
-  activity_id: string | null;  // set when regenerate_slides is true – poll GET /api/v2/jobs/{activityId}
+  applied: boolean;        // true when applied successfully
+  activity_id: string | null;  // set when regenerate_slides is true – poll GET /api/v2/jobs/{activity_id}
 };
 ```
 
