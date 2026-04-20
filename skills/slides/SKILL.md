@@ -223,9 +223,31 @@ All paths require `projectId` and `slideId` (replace placeholders with actual UU
 
 ### 2. Build and run the request
 
-- **Auth**: Every request must include `X-API-KEY: $LAYERPROOF_API_KEY`. Read `LAYERPROOF_BASE_URL` and `LAYERPROOF_API_KEY` from the environment; if missing, tell the user to set them.
-- **Path**: Resolve `project_id` and `slide_id` from context (e.g. from project/slide-deck list or user input). If missing, ask the user.
-- **POST/PUT**: Build JSON body from the types above. Use `-X POST` or `-X PUT`, `-H "Content-Type: application/json"`, and `-d '...'`. Run the curl and show the result.
+**Step 1 — Check environment variables first.** Before running any curl command, verify both `LAYERPROOF_BASE_URL` and `LAYERPROOF_API_KEY` are set on the user's machine:
+
+```bash
+if [[ -z "${LAYERPROOF_BASE_URL}" ]]; then
+  echo "ERROR: LAYERPROOF_BASE_URL is not set."
+  return 1
+fi
+if [[ -z "${LAYERPROOF_API_KEY}" ]]; then
+  echo "ERROR: LAYERPROOF_API_KEY is not set."
+  return 1
+fi
+```
+
+If running from a project directory with a `.env.local` file, load it first:
+```bash
+if [[ -f .env.local ]]; then
+  set -a
+  source .env.local
+  set +a
+fi
+```
+
+**Step 2 — Auth**: Every request must include `X-API-KEY: $LAYERPROOF_API_KEY`. Read `LAYERPROOF_BASE_URL` and `LAYERPROOF_API_KEY` from the environment; if missing, tell the user to set them.
+**Step 3 — Path**: Resolve `project_id` and `slide_id` from context (e.g. from project/slide-deck list or user input). If missing, ask the user.
+**Step 4 — POST/PUT**: Build JSON body from the types above. Use `-X POST` or `-X PUT`, `-H "Content-Type: application/json"`, and `-d '...'`. Run the curl and show the result.
 
 ### 3. After async endpoints (image-edit, object-removal, extract-text)
 

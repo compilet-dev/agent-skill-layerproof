@@ -56,8 +56,30 @@ When the user asks to check job status or poll an async operation, do the follow
 
 ### 2. Build and run
 
-- **Auth**: Include `X-API-KEY: $LAYERPROOF_API_KEY`. Read env vars; if missing, tell the user.
-- **Path**: Use the `activity_id` returned from a previous async call (outline generate, batch generate, export, etc.). Run curl and show the result.
+**Step 1 — Check environment variables first.** Before running any curl command, verify both `LAYERPROOF_BASE_URL` and `LAYERPROOF_API_KEY` are set on the user's machine:
+
+```bash
+if [[ -z "${LAYERPROOF_BASE_URL}" ]]; then
+  echo "ERROR: LAYERPROOF_BASE_URL is not set."
+  return 1
+fi
+if [[ -z "${LAYERPROOF_API_KEY}" ]]; then
+  echo "ERROR: LAYERPROOF_API_KEY is not set."
+  return 1
+fi
+```
+
+If running from a project directory with a `.env.local` file, load it first:
+```bash
+if [[ -f .env.local ]]; then
+  set -a
+  source .env.local
+  set +a
+fi
+```
+
+**Step 2 — Auth**: Include `X-API-KEY: $LAYERPROOF_API_KEY`. Read env vars; if missing, tell the user.
+**Step 3 — Path**: Use the `activity_id` returned from a previous async call (outline generate, batch generate, export, etc.). Run curl and show the result.
 
 ### 3. After response
 

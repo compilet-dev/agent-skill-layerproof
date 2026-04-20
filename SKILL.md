@@ -59,13 +59,57 @@ Each skill contains structured instructions that teach an AI agent how to intera
 
 # Required Environment Variables
 
-Before performing any API operations, ensure these environment variables are set:
+Before performing any API operations, the agent must verify that these environment variables are set on the user's machine.
+
+## Check before every API call
+
+Always verify the following environment variables exist before making any API request:
+
+```bash
+# Check if LAYERPROOF_BASE_URL is set
+if [[ -z "${LAYERPROOF_BASE_URL}" ]]; then
+  echo "ERROR: LAYERPROOF_BASE_URL is not set."
+  echo "Please set it in your shell profile or .env file, then re-run."
+  return 1
+fi
+
+# Check if LAYERPROOF_API_KEY is set
+if [[ -z "${LAYERPROOF_API_KEY}" ]]; then
+  echo "ERROR: LAYERPROOF_API_KEY is not set."
+  echo "Please set it in your shell profile or .env file, then re-run."
+  return 1
+fi
+```
+
+## Setting environment variables
+
+If not already set, instruct the user to add them:
 
 ```bash
 echo 'export LAYERPROOF_BASE_URL=https://api.layerproof.com' >> ~/.zshrc
 echo 'export LAYERPROOF_API_KEY=your-api-key-here' >> ~/.zshrc
 source ~/.zshrc
 ```
+
+Alternatively, for project-specific settings, create a `.env.local` file in the project root:
+
+```bash
+LAYERPROOF_BASE_URL=https://api.layerproof.com
+LAYERPROOF_API_KEY=your-api-key-here
+```
+
+When using a `.env.local` file, ensure it is loaded before running any curl commands:
+
+```bash
+# For zsh, load .env.local if it exists
+if [[ -f .env.local ]]; then
+  set -a
+  source .env.local
+  set +a
+fi
+```
+
+## Authentication header
 
 All API requests must include the following header:
 

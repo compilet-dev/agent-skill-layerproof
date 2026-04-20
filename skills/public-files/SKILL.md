@@ -116,8 +116,30 @@ When the user asks to upload or manage reference files (for outlines), do the fo
 
 ### 2. Build and run the request
 
-- **Auth**: Include `X-API-KEY: $LAYERPROOF_API_KEY`. Read `LAYERPROOF_BASE_URL` and `LAYERPROOF_API_KEY` from the environment; if missing, tell the user to set them.
-- **Body**: All endpoints use JSON body (`file_name`, `mime_type`, `size` for prepare; `s3_key` for confirm/delete/download-url). Run curl and show the result.
+**Step 1 — Check environment variables first.** Before running any curl command, verify both `LAYERPROOF_BASE_URL` and `LAYERPROOF_API_KEY` are set on the user's machine:
+
+```bash
+if [[ -z "${LAYERPROOF_BASE_URL}" ]]; then
+  echo "ERROR: LAYERPROOF_BASE_URL is not set."
+  return 1
+fi
+if [[ -z "${LAYERPROOF_API_KEY}" ]]; then
+  echo "ERROR: LAYERPROOF_API_KEY is not set."
+  return 1
+fi
+```
+
+If running from a project directory with a `.env.local` file, load it first:
+```bash
+if [[ -f .env.local ]]; then
+  set -a
+  source .env.local
+  set +a
+fi
+```
+
+**Step 2 — Auth**: Include `X-API-KEY: $LAYERPROOF_API_KEY`. Read env vars; if missing, tell the user.
+**Step 3 — Body**: All endpoints use JSON body (`file_name`, `mime_type`, `size` for prepare; `s3_key` for confirm/delete/download-url). Run curl and show the result.
 
 ### 3. Upload flow
 

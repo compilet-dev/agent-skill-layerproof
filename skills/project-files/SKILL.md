@@ -304,10 +304,32 @@ Base path: `/api/v2/projects/{projectId}`. Replace `project_id`, `directory_id`,
 
 ### 2. Build and run the request
 
-- **Auth**: Include `X-API-KEY: $LAYERPROOF_API_KEY`. Read env vars; if missing, tell the user.
-- **Path**: Resolve projectId, directoryId, fileId from context or user input.
-- **POST**: Build JSON body from types above; run curl and show result.
-- **GET/DELETE**: Build path only; run curl and show result.
+**Step 1 — Check environment variables first.** Before running any curl command, verify both `LAYERPROOF_BASE_URL` and `LAYERPROOF_API_KEY` are set on the user's machine:
+
+```bash
+if [[ -z "${LAYERPROOF_BASE_URL}" ]]; then
+  echo "ERROR: LAYERPROOF_BASE_URL is not set."
+  return 1
+fi
+if [[ -z "${LAYERPROOF_API_KEY}" ]]; then
+  echo "ERROR: LAYERPROOF_API_KEY is not set."
+  return 1
+fi
+```
+
+If running from a project directory with a `.env.local` file, load it first:
+```bash
+if [[ -f .env.local ]]; then
+  set -a
+  source .env.local
+  set +a
+fi
+```
+
+**Step 2 — Auth**: Include `X-API-KEY: $LAYERPROOF_API_KEY`. Read env vars; if missing, tell the user.
+**Step 3 — Path**: Resolve projectId, directoryId, fileId from context or user input.
+**Step 4 — POST**: Build JSON body from types above; run curl and show result.
+**Step 5 — GET/DELETE**: Build path only; run curl and show result.
 
 ### 3. Upload flow
 

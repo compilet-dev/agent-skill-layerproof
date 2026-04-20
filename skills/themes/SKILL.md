@@ -266,9 +266,31 @@ When the user asks to work with themes (list, get, generate, apply), do the foll
 
 ### 2. Build and run the request
 
-- **Auth**: Every request must include `X-API-KEY: $LAYERPROOF_API_KEY`. Read `LAYERPROOF_BASE_URL` and `LAYERPROOF_API_KEY` from the environment; if missing, tell the user to set them.
-- **GET**: Build `curl` with the chosen path and query params (`offset`, `limit`, `search` for list). Run the curl and show the result.
-- **POST**: Build a JSON body from the user's input (prompt, theme ID, slide deck ID, etc.). Use `-X POST`, `-H "Content-Type: application/json"`, and `-d '...'`. Run the curl and show the result.
+**Step 1 — Check environment variables first.** Before running any curl command, verify both `LAYERPROOF_BASE_URL` and `LAYERPROOF_API_KEY` are set on the user's machine:
+
+```bash
+if [[ -z "${LAYERPROOF_BASE_URL}" ]]; then
+  echo "ERROR: LAYERPROOF_BASE_URL is not set."
+  return 1
+fi
+if [[ -z "${LAYERPROOF_API_KEY}" ]]; then
+  echo "ERROR: LAYERPROOF_API_KEY is not set."
+  return 1
+fi
+```
+
+If running from a project directory with a `.env.local` file, load it first:
+```bash
+if [[ -f .env.local ]]; then
+  set -a
+  source .env.local
+  set +a
+fi
+```
+
+**Step 2 — Auth**: Every request must include `X-API-KEY: $LAYERPROOF_API_KEY`. Read `LAYERPROOF_BASE_URL` and `LAYERPROOF_API_KEY` from the environment; if missing, tell the user to set them.
+**Step 3 — GET**: Build `curl` with the chosen path and query params (`offset`, `limit`, `search` for list). Run the curl and show the result.
+**Step 4 — POST**: Build a JSON body from the user's input (prompt, theme ID, slide deck ID, etc.). Use `-X POST`, `-H "Content-Type: application/json"`, and `-d '...'`. Run the curl and show the result.
 
 ### 3. After generate or apply (with regeneration)
 

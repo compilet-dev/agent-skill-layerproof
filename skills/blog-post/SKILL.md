@@ -228,15 +228,7 @@ curl -X POST "$LAYERPROOF_BASE_URL/api/v2/blog-posts/<blog_post_id>/ai-operation
 
 | Action | Method | Path |
 |--------|--------|------|
-| Generate image | POST | `/api/v2/blog-posts/{blog_post_id}/generate-image` |
 | List resolved images | GET | `/api/v2/blog-posts/{blog_post_id}/images` |
-
-```bash
-curl -X POST "$LAYERPROOF_BASE_URL/api/v2/blog-posts/<blog_post_id>/generate-image" \
-  -H "Content-Type: application/json" \
-  -H "X-API-KEY: $LAYERPROOF_API_KEY" \
-  -d '{"prompt":"Hero image: abstract gradient waves"}'
-```
 
 ---
 
@@ -291,6 +283,26 @@ curl -X POST "$LAYERPROOF_BASE_URL/api/v2/blog-posts/<blog_post_id>/social-campa
 ---
 
 ## Agent behavior
+
+**Before any API call, verify environment variables are set:**
+
+```bash
+if [[ -z "${LAYERPROOF_BASE_URL}" ]]; then
+  echo "ERROR: LAYERPROOF_BASE_URL is not set."
+  return 1
+fi
+if [[ -z "${LAYERPROOF_API_KEY}" ]]; then
+  echo "ERROR: LAYERPROOF_API_KEY is not set."
+  return 1
+fi
+
+# Load .env.local if present
+if [[ -f .env.local ]]; then
+  set -a
+  source .env.local
+  set +a
+fi
+```
 
 1. Resolve `blog_post_id` (list or create via generate).
 2. For **jobs-based** endpoints (outline/full/section/expand), poll `/api/v2/jobs/{activityId}` until terminal.

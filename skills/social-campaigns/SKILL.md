@@ -229,6 +229,26 @@ curl -X POST "$LAYERPROOF_BASE_URL/api/v2/social-campaigns/<campaign_id>/exports
 
 ## Agent behavior
 
+**Before any API call, verify environment variables are set:**
+
+```bash
+if [[ -z "${LAYERPROOF_BASE_URL}" ]]; then
+  echo "ERROR: LAYERPROOF_BASE_URL is not set."
+  return 1
+fi
+if [[ -z "${LAYERPROOF_API_KEY}" ]]; then
+  echo "ERROR: LAYERPROOF_API_KEY is not set."
+  return 1
+fi
+
+# Load .env.local if present
+if [[ -f .env.local ]]; then
+  set -a
+  source .env.local
+  set +a
+fi
+```
+
 1. Resolve **`campaign_id`** (create or list). **`campaign_live_object_id`** in responses is the campaign root live object.
 2. **Generate** → poll **jobs** until `DONE` / handle `failure_reason`.
 3. **Exports** → poll **`.../social-campaigns/{id}/exports/{export_id}`** until `COMPLETED` or `FAILED`.

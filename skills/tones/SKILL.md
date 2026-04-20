@@ -174,6 +174,26 @@ curl -X POST "$LAYERPROOF_BASE_URL/api/v2/tones/<tone_id>/duplicate" \
 
 ## Agent behavior
 
+Always check environment variables first before making any API call:
+
+```bash
+if [[ -z "${LAYERPROOF_BASE_URL}" ]]; then
+  echo "ERROR: LAYERPROOF_BASE_URL is not set."
+  return 1
+fi
+if [[ -z "${LAYERPROOF_API_KEY}" ]]; then
+  echo "ERROR: LAYERPROOF_API_KEY is not set."
+  return 1
+fi
+
+# Load .env.local if present
+if [[ -f .env.local ]]; then
+  set -a
+  source .env.local
+  set +a
+fi
+```
+
 | User intent | Endpoint | Method |
 |-------------|----------|--------|
 | List presets | `/api/v2/tones` | GET |

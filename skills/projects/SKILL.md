@@ -306,10 +306,32 @@ When the user asks to manage projects, do the following.
 
 ### 2. Build and run the request
 
-- **Auth**: Include `X-API-KEY: $LAYERPROOF_API_KEY`. Read `LAYERPROOF_BASE_URL` and `LAYERPROOF_API_KEY` from the environment; if missing, tell the user to set them.
-- **GET list**: Use `limit` (default 20, max 100) and `cursor` for pagination. Pass `next_cursor` from a previous response as `cursor` to fetch the next page.
-- **POST/PUT**: Build JSON body from the appropriate request type. Run curl and show result.
-- **DELETE project / vote**: Build path; run curl. Response is 204 with no body.
+**Step 1 — Check environment variables first.** Before running any curl command, verify both `LAYERPROOF_BASE_URL` and `LAYERPROOF_API_KEY` are set on the user's machine:
+
+```bash
+if [[ -z "${LAYERPROOF_BASE_URL}" ]]; then
+  echo "ERROR: LAYERPROOF_BASE_URL is not set."
+  return 1
+fi
+if [[ -z "${LAYERPROOF_API_KEY}" ]]; then
+  echo "ERROR: LAYERPROOF_API_KEY is not set."
+  return 1
+fi
+```
+
+If running from a project directory with a `.env.local` file, load it first:
+```bash
+if [[ -f .env.local ]]; then
+  set -a
+  source .env.local
+  set +a
+fi
+```
+
+**Step 2 — Auth**: Include `X-API-KEY: $LAYERPROOF_API_KEY`. Read env vars; if missing, tell the user.
+**Step 3 — GET list**: Use `limit` (default 20, max 100) and `cursor` for pagination. Pass `next_cursor` from a previous response as `cursor` to fetch the next page.
+**Step 4 — POST/PUT**: Build JSON body from the appropriate request type. Run curl and show result.
+**Step 5 — DELETE project / vote**: Build path; run curl. Response is 204 with no body.
 
 ### 3. Response handling
 
