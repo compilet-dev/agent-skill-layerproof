@@ -26,9 +26,12 @@ type PublicApiOutlineSection = {
   key_points?: string[] | null;
   visual_suggestion?: string | null;  // max 500
   speaker_notes?: string | null;       // max 2000
+  url_references?: string | null;
   layout?: string | null;
   icon_assets?: PublicApiSlideIconAsset[];
   image_assets?: PublicApiSlideImageAsset[];
+  reference_image_paths?: string[];
+  slide_intent?: Record<string, unknown> | null;
 };
 
 // --- Generate Outline (POST) — async ---
@@ -40,7 +43,6 @@ type GenerateOutlineRequest = {
   web_search_enabled?: boolean;
   text_detail_level?: string | null;
   tone?: string | null;
-  outline_type?: string | null;
 };
 type GenerateOutlineResponse = {
   activity_id: string;
@@ -59,6 +61,7 @@ type PublicApiOutline = {
   title: string;
   sections: PublicApiOutlineSection[];
   total_sections: number;
+  suggested_slide_count?: number | null;
   updated_at?: string;
 };
 type UpdateOutlineResponse = { outline: PublicApiOutline };
@@ -406,8 +409,17 @@ Base path: `/api/v2/projects/{projectId}/slide-deck/{slideDeckId}`. All require 
 | Generate deck theme | `.../theme/generate` | POST |
 | Update slide transcript | `.../slides/{slideSectionId}/transcript` | PUT |
 | Duplicate section | `.../slides/{slideSectionId}/duplicate` | POST |
-
-Other endpoints (improve section, generate-manual, visual style, transcript versions, restore version, mark read, TTS, audio download URL, update settings, import prepare/pptx, tone settings, batch layout): use same base path and request/response shapes from controller.
+| Improve section (AI) | `.../slides/improve` | POST |
+| Manual slide generation | `.../slides/generate-manual` | POST |
+| Patch visual style description | `.../theme/visual-style-description` | PATCH |
+| List / restore transcript versions | `.../slides/{id}/transcript/versions` (GET), `.../versions/{version_id}/restore` (POST) | GET / POST |
+| Mark transcript / improvement / live object read | `.../mark-transcript-read`, `.../mark-improvement-read`, `.../live-objects/{id}/mark-read` | PATCH |
+| Text-to-speech | `.../slides/{id}/generate-tts` (POST), `.../slides/{audio_id}/audio/download-url` (GET) | POST / GET |
+| Update deck settings (aspect ratio, etc.) | `.../` (slide-deck root) | PATCH |
+| Tone settings | `.../tone-settings` | GET / PUT |
+| Batch Konva layout | `.../slides/batch-generate-layout` | POST |
+| PPTX import | `.../import/prepare-upload`, `.../import` | POST |
+| Citations | `.../citations`, `.../citations/slide/{index}`, `.../citations/{citation_id}` | GET |
 
 ### 2. Build and run the request
 
@@ -442,17 +454,17 @@ Other endpoints (improve section, generate-manual, visual style, transcript vers
 2. POST `.../outline/generate` with `{"prompt":"Product launch with pricing","slide_count":6,"file_s3_keys":["<s3_key>"],"language":"en"}`; capture `activity_id`.
 3. Poll `GET /api/v2/jobs/{activity_id}` until DONE. On failure, report and stop.
 4. GET deck; from `outline.sections` identify a section to change. PUT `.../outline` with `title` and updated `sections` (e.g. edit `section_title`, `key_points`, `visual_suggestion` for one section).
-5. If user wants a theme: use themes skill to resolve `theme_id`; PUT `.../settings` with `{"theme_id":"<theme_id>"}` (or apply-theme endpoint per API).
+5. If user wants a theme: use themes skill — **POST `/api/v2/themes/apply`** with `slide_deck_id` and `theme_id` (set `regenerate_slides` if images should be regenerated); poll job when `activity_id` is returned.
 6. POST `.../batch-generate` with optional `generation_type`, `aspect_ratio`, `speaking_style`; capture `activity_id`.
 7. Poll `GET /api/v2/jobs/{activity_id}` until DONE.
 8. GET deck; check `metadata.completed_slides` and `slides[].generation_status`. If one slide’s image is wrong, POST `.../slides/{sectionId}/generate-image` (or generate-content) with section id; poll that job until DONE; GET deck again to show result.
 
 **Workflow C — User**: "Duplicate a section in the outline and regenerate slides for the new section only."
 
-1. GET deck; from `outline.sections` get section ids and order. Determine source section to duplicate.
-2. POST `.../sections/duplicate` with `section_id` (or equivalent); capture new `section_id` from response or GET deck again.
-3. PUT `.../outline` to include the new section in `sections` with correct order and titles.
-4. POST `.../slides/{newSectionId}/generate-transcript` and/or `generate-image` (or batch-generate if it supports partial); poll job(s); GET deck to confirm.
+1. GET deck; from `outline.sections` pick a `section_id` (UUID string) to duplicate.
+2. POST `.../slides/{slide_section_id}/duplicate` with `{"copy_content":true,"insert_after":true}`; read `new_section_id` from the response.
+3. PUT `.../outline` with updated `title` and `sections` array (merge/reorder the duplicated section as needed).
+4. POST `.../slides/generate-transcript` | `generate-image` | `generate-content` with the new section id; poll `GET /api/v2/jobs/{activity_id}`; GET deck to confirm.
 
 ---
 

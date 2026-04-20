@@ -1,13 +1,13 @@
 ---
 name: exports
-description: Public API export (X-API-KEY). Export project as PNG ZIP or PPTX (async), get status, cancel. Types follow PublicApiExportController (/api/v2/projects/{projectId}/exports).
+description: Public API export (X-API-KEY). Export PNG ZIP, PPTX, or video (async), get status, cancel. PublicApiExportController.
 ---
 
 # Skill: Export Slides
 
 ## Description
 
-Export presentations as PNG ZIP or PPTX. This skill documents the **public API** at `/api/v2/projects/{projectId}/exports` (PublicApiExportController). Exports are async: POST returns exportId (activityId); poll GET .../exports/{exportId} for status; when COMPLETED, use downloadUrl (presigned, ~1 hour). Authenticate with `X-API-KEY` header.
+Export presentations as PNG ZIP, PPTX, or **narrated video** (Pro / credits). This skill documents the **public API** at `/api/v2/projects/{projectId}/exports` (PublicApiExportController). Exports are async: POST returns `export_id` (same id used for job-style polling); poll GET `.../exports/{export_id}` for status; when COMPLETED, use `download_url` (presigned, ~1 hour). Authenticate with `X-API-KEY` header.
 
 ---
 
@@ -16,29 +16,37 @@ Export presentations as PNG ZIP or PPTX. This skill documents the **public API**
 Mirrors `PublicApiExportController` data classes.
 
 ```typescript
-// --- Export PNG / PPTX (POST) — 202 ---
+// --- Export PNG / PPTX / Video (POST) — 202 ---
 type PublicExportStartedResponse = {
-  exportId: string;  // UUID, use to poll status
+  export_id: string;  // UUID — poll GET .../exports/{export_id}
   status?: string;   // default "PENDING"
+};
+
+// --- Video export body (POST .../exports/video) — optional ---
+type PublicVideoExportRequest = {
+  quality?: string | null;       // export quality enum as returned by API
+  include_notes?: boolean;      // default false
+  voice?: string | null;         // default "Puck"
+  language_code?: string | null; // default "en-US"
 };
 
 // --- Get Export Status (GET) ---
 type PublicExportProgress = { current: number; total: number };
 type PublicExportStatusData = {
-  exportId: string;
+  export_id: string;
   status: string;
   format: string;
-  downloadUrl?: string | null;
-  expiresAt?: string | null;
-  fileSizeBytes?: number | null;
+  download_url?: string | null;
+  expires_at?: string | null;
+  file_size_bytes?: number | null;
   progress?: PublicExportProgress | null;
-  errorMessage?: string | null;
+  error_message?: string | null;
 };
 type PublicExportStatusResponse = { data: PublicExportStatusData };
 
 // --- Cancel Export (POST) ---
 type PublicCancelExportResponse = {
-  exportId: string;
+  export_id: string;
   status: string;  // "CANCELLED" or "ALREADY_TERMINAL"
 };
 ```
@@ -63,6 +71,19 @@ Response (202): `PublicExportStartedResponse`. Poll GET .../exports/{exportId} f
 ```bash
 curl -X POST "$LAYERPROOF_BASE_URL/api/v2/projects/<project_id>/exports/pptx" \
   -H "X-API-KEY: $LAYERPROOF_API_KEY"
+```
+
+---
+
+## Export Video (async)
+
+Narrated video with TTS. May return **402** (quota) or **403** (Pro plan required). Optional JSON body: `PublicVideoExportRequest`.
+
+```bash
+curl -X POST "$LAYERPROOF_BASE_URL/api/v2/projects/<project_id>/exports/video" \
+  -H "Content-Type: application/json" \
+  -H "X-API-KEY: $LAYERPROOF_API_KEY" \
+  -d '{"include_notes":false,"voice":"Puck","language_code":"en-US"}'
 ```
 
 ---
@@ -101,6 +122,7 @@ Base path: `/api/v2/projects/{projectId}/exports`. All require `projectId`.
 |-------------|----------|--------|
 | Export as PNG ZIP | `.../exports/png` | POST |
 | Export as PPTX | `.../exports/pptx` | POST |
+| Export as video (TTS) | `.../exports/video` | POST |
 | Get export status / download URL | `.../exports/{exportId}` | GET |
 | Cancel in-progress export | `.../exports/{exportId}/cancel` | POST |
 
@@ -112,33 +134,33 @@ Base path: `/api/v2/projects/{projectId}/exports`. All require `projectId`.
 
 ### 3. After starting export
 
-- Response contains `exportId`. Tell the user to poll GET .../exports/{exportId} until status is COMPLETED (or FAILED). When COMPLETED, use `data.downloadUrl` (valid ~1 hour).
+- Response contains `export_id`. Tell the user to poll GET .../exports/{export_id} until status is COMPLETED (or FAILED). When COMPLETED, use `data.download_url` (valid ~1 hour).
 
 ### 4. Response handling
 
 - Always show raw JSON in a code block.
-- If downloadUrl is present, show the URL and mention the file can be downloaded.
+- If `download_url` is present, show the URL and mention the file can be downloaded.
 - On 410, download URL expired; suggest triggering a new export.
 
 ### 5. Example workflows
 
 **Workflow A — User**: "Export my project as PPTX and give me the download link."
 
-1. Resolve projectId. POST `.../projects/{projectId}/exports/pptx`; capture `exportId` from 202 response.
-2. Poll GET `.../projects/{projectId}/exports/{exportId}` until `data.status` is COMPLETED or FAILED. If FAILED, show `data.errorMessage` and suggest retry or checking project/slides.
-3. When COMPLETED, show `data.downloadUrl` and `data.expiresAt`; remind user the URL is temporary (~1 hour).
+1. Resolve projectId. POST `.../projects/{projectId}/exports/pptx`; capture `export_id` from 202 response.
+2. Poll GET `.../projects/{projectId}/exports/{export_id}` until `data.status` is COMPLETED or FAILED. If FAILED, show `data.error_message` and suggest retry or checking project/slides.
+3. When COMPLETED, show `data.download_url` and `data.expires_at`; remind user the URL is temporary (~1 hour).
 
 **Workflow B — User**: "Export the same project as both PNG ZIP and PPTX; if one fails, still get the other."
 
-1. POST `.../exports/png`; get `exportId_png`. POST `.../exports/pptx`; get `exportId_pptx`.
-2. Poll both: GET `.../exports/{exportId_png}` and GET `.../exports/{exportId_pptx}` (e.g. in sequence or inform user to poll). For each: when COMPLETED, show downloadUrl; when FAILED, show errorMessage and which format failed.
-3. Optionally: if user wants to cancel the slower one, POST `.../exports/{exportId}/cancel` for the relevant exportId.
+1. POST `.../exports/png`; get `export_id_png`. POST `.../exports/pptx`; get `export_id_pptx`.
+2. Poll both: GET `.../exports/{export_id_png}` and GET `.../exports/{export_id_pptx}` (e.g. in sequence or inform user to poll). For each: when COMPLETED, show `download_url`; when FAILED, show `error_message` and which format failed.
+3. Optionally: if user wants to cancel the slower one, POST `.../exports/{export_id}/cancel` for the relevant export id.
 
 **Workflow C — User**: "Start a PPTX export; I might cancel it if it takes too long."
 
-1. POST `.../exports/pptx`; get `exportId`. Tell user polling has started.
-2. If user says "cancel the export" before COMPLETED: POST `.../exports/{exportId}/cancel`; show response (status CANCELLED or ALREADY_TERMINAL).
-3. If not canceled: poll until COMPLETED and show downloadUrl, or FAILED and show errorMessage.
+1. POST `.../exports/pptx`; get `export_id`. Tell user polling has started.
+2. If user says "cancel the export" before COMPLETED: POST `.../exports/{export_id}/cancel`; show response (status CANCELLED or ALREADY_TERMINAL).
+3. If not canceled: poll until COMPLETED and show `download_url`, or FAILED and show `error_message`.
 
 ---
 

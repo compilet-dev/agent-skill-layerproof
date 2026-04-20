@@ -23,7 +23,8 @@ type JobStatusResponse = {
   message: string;
   created_at?: string | null;   // ISO 8601
   updated_at?: string | null;   // ISO 8601
-  output?: string | null;       // JSON string when DONE
+  live_object_id?: string | null;  // when derivable from activity input
+  output?: Record<string, unknown> | null;  // structured map when DONE
   failure_reason?: string | null;
 };
 ```
@@ -34,7 +35,7 @@ type JobStatusResponse = {
 
 Response: `JobStatusResponse`.
 
-Poll until `status` is `DONE` or `CANCELED`. When DONE, use `output` (JSON string) for results; when failed, use `failure_reason`.
+Poll until `status` is `DONE` or `CANCELED`. When DONE, use `output` (object map when present) for results; when failed, use `failure_reason`.
 
 ```bash
 curl "$LAYERPROOF_BASE_URL/api/v2/jobs/<activity_id>" \
@@ -61,7 +62,7 @@ When the user asks to check job status or poll an async operation, do the follow
 ### 3. After response
 
 - If status is SCHEDULED/RUNNING/PENDING, suggest polling again after a few seconds.
-- If DONE, parse `output` if present and summarize the result.
+- If DONE, use `output` (object) if present and summarize the result.
 - If CANCELED or DONE with `failure_reason`, report the outcome.
 
 ### 4. Response handling

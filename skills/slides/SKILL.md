@@ -67,7 +67,6 @@ type ExtractTextRequest = {
 type SaveKonvaNodesRequest = {
   konva_nodes: Record<string, unknown>;  // required
   konva_order: string[];                  // required
-  flattened_image_path?: string;
   base_snapshot_id?: string;  // UUID, optional
 };
 

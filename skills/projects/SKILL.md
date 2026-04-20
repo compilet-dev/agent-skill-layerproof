@@ -1,13 +1,13 @@
 ---
 name: projects
-description: Public API project management (X-API-KEY). Create, list, get, update, delete, clone, vote projects. Supports cursor pagination. Types follow PublicApiProjectController (/api/v2/projects).
+description: Public API project management (X-API-KEY). Create, list, get, update, delete, clone, vote, visibility, recent/deleted/restore. Cursor pagination. Types follow PublicApiProjectController (/api/v2/projects).
 ---
 
 # Skill: Projects Management
 
 ## Description
 
-Manage Layerproof projects (create, list, get, update, delete, clone, vote). This skill documents the **public API** at `/api/v2/projects` (PublicApiProjectController). Authenticate with `X-API-KEY` header. List uses cursor pagination via `limit` and `cursor` query params.
+Manage Layerproof projects (create, list, get, update, delete, clone, vote, public list, visibility, recent, soft-delete restore). This skill documents the **public API** at `/api/v2/projects` (PublicApiProjectController). Authenticate with `X-API-KEY` header. **List** uses cursor pagination (`limit`, `cursor`). **List deleted** uses offset pagination (`page`, `page_size`).
 
 ---
 
@@ -82,8 +82,18 @@ type PublicApiProjectResponse = {
 // --- List response (cursor-paginated) ---
 type PublicApiProjectListResponse = {
   data: PublicApiProjectResponse[];
-  next_cursor: string | null;     // pass as `cursor` param for next page
-  has_more: boolean;
+  next_cursor?: string | null;     // pass as `cursor` param for next page
+  has_more?: boolean;
+};
+
+// --- Recent projects (GET /list/recent) ---
+type PublicApiRecentProjectsResponse = {
+  data: PublicApiProjectResponse[];
+};
+
+// --- Update visibility only (PUT /{project_id}/visibility) ---
+type PublicApiUpdateProjectVisibilityRequest = {
+  is_public: boolean;  // required
 };
 ```
 
@@ -214,6 +224,63 @@ curl -X POST "$LAYERPROOF_BASE_URL/api/v2/projects/<project_id>/clone" \
 
 ---
 
+## Update Project Visibility
+
+Sets public or private without sending a full project update. Request body: `PublicApiUpdateProjectVisibilityRequest`. Response: `PublicApiProjectResponse`.
+
+```bash
+curl -X PUT "$LAYERPROOF_BASE_URL/api/v2/projects/<project_id>/visibility" \
+  -H "Content-Type: application/json" \
+  -H "X-API-KEY: $LAYERPROOF_API_KEY" \
+  -d '{"is_public":true}'
+```
+
+---
+
+## List Recent Projects
+
+Query: `limit` (default 4, max 100). Response: `PublicApiRecentProjectsResponse`.
+
+```bash
+curl "$LAYERPROOF_BASE_URL/api/v2/projects/list/recent?limit=8" \
+  -H "X-API-KEY: $LAYERPROOF_API_KEY"
+```
+
+---
+
+## List Deleted Projects
+
+Soft-deleted projects for the current user. Query: `page` (default 0), `page_size` (default 20). Response: `PublicApiProjectListResponse` (cursor fields may be absent; use `has_more`).
+
+```bash
+curl "$LAYERPROOF_BASE_URL/api/v2/projects/deleted?page=0&page_size=20" \
+  -H "X-API-KEY: $LAYERPROOF_API_KEY"
+```
+
+---
+
+## Restore Deleted Project
+
+Restores a soft-deleted project. Response (200): `{"restored": true}`.
+
+```bash
+curl -X POST "$LAYERPROOF_BASE_URL/api/v2/projects/<project_id>/restore" \
+  -H "X-API-KEY: $LAYERPROOF_API_KEY"
+```
+
+---
+
+## Permanently Delete Project
+
+Hard-deletes a project that is already soft-deleted. Response: 204 No Content.
+
+```bash
+curl -X DELETE "$LAYERPROOF_BASE_URL/api/v2/projects/<project_id>/permanently" \
+  -H "X-API-KEY: $LAYERPROOF_API_KEY"
+```
+
+---
+
 ## Agent behavior
 
 When the user asks to manage projects, do the following.
@@ -231,6 +298,11 @@ When the user asks to manage projects, do the following.
 | Vote for a project | `/api/v2/projects/{projectId}/vote` | POST |
 | Remove vote | `/api/v2/projects/{projectId}/vote` | DELETE |
 | Clone a project | `/api/v2/projects/{projectId}/clone` | POST |
+| Set visibility only | `/api/v2/projects/{projectId}/visibility` | PUT |
+| Recent projects | `/api/v2/projects/list/recent?limit=8` | GET |
+| List deleted projects | `/api/v2/projects/deleted?page=0&page_size=20` | GET |
+| Restore deleted project | `/api/v2/projects/{projectId}/restore` | POST |
+| Permanently delete (after soft delete) | `/api/v2/projects/{projectId}/permanently` | DELETE |
 
 ### 2. Build and run the request
 

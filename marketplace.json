@@ -1,9 +1,9 @@
 {
   "$schema": "https://claude.ai/schemas/skill-pack/v1",
   "name": "layerproof-agent-skills",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "displayName": "Layerproof API Skills",
-  "description": "Agent skills for interacting with the Layerproof public API (X-API-KEY). Covers workspaces, projects, file uploads, slide deck generation, slide editing, themes, exports, social campaigns, and async job polling.",
+  "description": "Agent skills for the Layerproof public API (X-API-KEY): workspaces, projects, files, slide decks, slide editing, themes, tone presets, exports (incl. video), social campaigns, job polling.",
   "author": "Layerproof",
   "homepage": "https://github.com/compilet-dev/agent-skill-layerproof",
   "repository": "https://github.com/compilet-dev/agent-skill-layerproof",
@@ -24,27 +24,40 @@
     {
       "name": "workspaces",
       "displayName": "Workspace Management",
-      "description": "Create, list, get, update, and delete workspaces. /api/v2/workspaces",
+      "description": "Create, list, get, update, delete workspaces; list deleted, restore, permanent delete, list workspace files. /api/v2/workspaces",
       "path": "skills/workspaces/SKILL.md",
       "endpoints": [
         "POST /api/v2/workspaces",
         "GET /api/v2/workspaces",
+        "GET /api/v2/workspaces/deleted",
         "GET /api/v2/workspaces/{workspaceId}",
+        "GET /api/v2/workspaces/{workspaceId}/files",
         "PUT /api/v2/workspaces/{workspaceId}",
-        "DELETE /api/v2/workspaces/{workspaceId}"
+        "DELETE /api/v2/workspaces/{workspaceId}",
+        "POST /api/v2/workspaces/{workspaceId}/restore",
+        "DELETE /api/v2/workspaces/{workspaceId}/permanently"
       ]
     },
     {
       "name": "projects",
       "displayName": "Project Management",
-      "description": "Create, list, get, update, and delete slide deck projects. /api/v2/projects",
+      "description": "Projects: cursor list, public list, clone, vote, visibility, recent, deleted, restore, permanent delete. /api/v2/projects",
       "path": "skills/projects/SKILL.md",
       "endpoints": [
         "POST /api/v2/projects",
         "GET /api/v2/projects",
+        "GET /api/v2/projects/public",
+        "GET /api/v2/projects/list/recent",
+        "GET /api/v2/projects/deleted",
         "GET /api/v2/projects/{projectId}",
         "PUT /api/v2/projects/{projectId}",
-        "DELETE /api/v2/projects/{projectId}"
+        "PUT /api/v2/projects/{projectId}/visibility",
+        "DELETE /api/v2/projects/{projectId}",
+        "POST /api/v2/projects/{projectId}/restore",
+        "DELETE /api/v2/projects/{projectId}/permanently",
+        "POST /api/v2/projects/{projectId}/vote",
+        "DELETE /api/v2/projects/{projectId}/vote",
+        "POST /api/v2/projects/{projectId}/clone"
       ]
     },
     {
@@ -62,11 +75,18 @@
     {
       "name": "project-files",
       "displayName": "Project File Management",
-      "description": "Manage files in project directories. Prepare, update, confirm, get, download URL, delete. /api/v2/projects/{projectId}",
+      "description": "Project directories: prepare/update upload, AI files, subdirectories, resolve assets, preview URL, file CRUD. /api/v2/projects/{projectId}",
       "path": "skills/project-files/SKILL.md",
       "endpoints": [
         "POST /api/v2/projects/{projectId}/directories/{directoryId}/files/prepare",
         "POST /api/v2/projects/{projectId}/directories/{directoryId}/files/prepare-update",
+        "POST /api/v2/projects/{projectId}/directories/{directoryId}/subdirectories",
+        "POST /api/v2/projects/{projectId}/directories/{directoryId}/resolve-assets",
+        "POST /api/v2/projects/{projectId}/directories/{directoryId}/resolve-paths-to-ids",
+        "POST /api/v2/projects/{projectId}/directories/{directoryId}/files/{fileId}/preview-url",
+        "POST /api/v2/projects/{projectId}/directories/{directoryId}/ai-files",
+        "POST /api/v2/projects/{projectId}/ai-files/{aiFileId}/trigger",
+        "POST /api/v2/projects/{projectId}/ai-files/{aiFileId}/cancel",
         "POST /api/v2/projects/{projectId}/files/{fileId}/confirm",
         "GET /api/v2/projects/{projectId}/files/{fileId}",
         "GET /api/v2/projects/{projectId}/files/{fileId}/download-url",
@@ -88,8 +108,20 @@
         "POST /api/v2/projects/{projectId}/slide-deck/{slideDeckId}/slides/generate-image",
         "POST /api/v2/projects/{projectId}/slide-deck/{slideDeckId}/cancel",
         "POST /api/v2/projects/{projectId}/slide-deck/{slideDeckId}/theme/generate",
+        "PATCH /api/v2/projects/{projectId}/slide-deck/{slideDeckId}/theme/visual-style-description",
         "PUT /api/v2/projects/{projectId}/slide-deck/{slideDeckId}/slides/{slideSectionId}/transcript",
-        "POST /api/v2/projects/{projectId}/slide-deck/{slideDeckId}/slides/{slideSectionId}/duplicate"
+        "POST /api/v2/projects/{projectId}/slide-deck/{slideDeckId}/slides/{slideSectionId}/duplicate",
+        "POST /api/v2/projects/{projectId}/slide-deck/{slideDeckId}/slides/improve",
+        "POST /api/v2/projects/{projectId}/slide-deck/{slideDeckId}/slides/generate-manual",
+        "GET /api/v2/projects/{projectId}/slide-deck/{slideDeckId}/tone-settings",
+        "PUT /api/v2/projects/{projectId}/slide-deck/{slideDeckId}/tone-settings",
+        "PATCH /api/v2/projects/{projectId}/slide-deck/{slideDeckId}",
+        "POST /api/v2/projects/{projectId}/slide-deck/{slideDeckId}/import/prepare-upload",
+        "POST /api/v2/projects/{projectId}/slide-deck/{slideDeckId}/import",
+        "POST /api/v2/projects/{projectId}/slide-deck/{slideDeckId}/slides/batch-generate-layout",
+        "GET /api/v2/projects/{projectId}/slide-deck/{slideDeckId}/citations",
+        "GET /api/v2/projects/{projectId}/slide-deck/{slideDeckId}/citations/slide/{slideIndex}",
+        "GET /api/v2/projects/{projectId}/slide-deck/{slideDeckId}/citations/{citationId}"
       ]
     },
     {
@@ -109,23 +141,46 @@
     {
       "name": "themes",
       "displayName": "Theme Management",
-      "description": "List, get, generate, and apply visual themes to slide decks. /api/v2/themes",
+      "description": "Themes: list, get, save, update, delete, generate, regenerate, apply, unapply, by-user-id. /api/v2/themes",
       "path": "skills/themes/SKILL.md",
       "endpoints": [
         "GET /api/v2/themes",
+        "GET /api/v2/themes/by-user-id",
         "GET /api/v2/themes/{themeId}",
+        "POST /api/v2/themes",
+        "PUT /api/v2/themes/{themeId}",
+        "DELETE /api/v2/themes/{themeId}",
         "POST /api/v2/themes/generate",
-        "POST /api/v2/themes/apply"
+        "POST /api/v2/themes/{themeId}/regenerate",
+        "POST /api/v2/themes/apply",
+        "POST /api/v2/themes/unapply"
+      ]
+    },
+    {
+      "name": "tones",
+      "displayName": "Tone Presets",
+      "description": "Tone preset library: CRUD, duplicate, apply to slide deck, save-as-preset. /api/v2/tones",
+      "path": "skills/tones/SKILL.md",
+      "endpoints": [
+        "GET /api/v2/tones",
+        "POST /api/v2/tones",
+        "GET /api/v2/tones/{toneId}",
+        "PUT /api/v2/tones/{toneId}",
+        "DELETE /api/v2/tones/{toneId}",
+        "POST /api/v2/tones/{toneId}/apply",
+        "POST /api/v2/tones/save-as-preset",
+        "POST /api/v2/tones/{toneId}/duplicate"
       ]
     },
     {
       "name": "exports",
       "displayName": "Export Slides",
-      "description": "Export presentations as PNG ZIP or PPTX (async). Poll status, get download URL, cancel. /api/v2/projects/{projectId}/exports",
+      "description": "Export PNG ZIP, PPTX, or video (async). Poll status, download URL, cancel. /api/v2/projects/{projectId}/exports",
       "path": "skills/exports/SKILL.md",
       "endpoints": [
         "POST /api/v2/projects/{projectId}/exports/png",
         "POST /api/v2/projects/{projectId}/exports/pptx",
+        "POST /api/v2/projects/{projectId}/exports/video",
         "GET /api/v2/projects/{projectId}/exports/{exportId}",
         "POST /api/v2/projects/{projectId}/exports/{exportId}/cancel"
       ]
@@ -133,7 +188,7 @@
     {
       "name": "social-campaigns",
       "displayName": "Social Campaigns",
-      "description": "Create, list, get, update, delete campaigns; topics (create, update, delete, reorder); generate campaign, platform posts, edit images; export ZIP. /api/v2/social-campaigns",
+      "description": "Social campaigns: CRUD, generate, confirm outline, topics, variations, captions, theme, exports, citations/history. /api/v2/social-campaigns",
       "path": "skills/social-campaigns/SKILL.md",
       "endpoints": [
         "POST /api/v2/social-campaigns",
@@ -142,17 +197,30 @@
         "PUT /api/v2/social-campaigns/{campaign_id}",
         "PUT /api/v2/social-campaigns/{campaign_id}/settings",
         "POST /api/v2/social-campaigns/{campaign_id}/generate",
+        "POST /api/v2/social-campaigns/{campaign_id}/confirm-outline",
+        "POST /api/v2/social-campaigns/{campaign_id}/generate-theme",
         "DELETE /api/v2/social-campaigns/{campaign_id}",
         "POST /api/v2/social-campaigns/{campaign_id}/posts",
         "PUT /api/v2/social-campaigns/{campaign_id}/posts/{post_id}",
         "DELETE /api/v2/social-campaigns/{campaign_id}/posts/{post_id}",
         "PUT /api/v2/social-campaigns/{campaign_id}/reorder",
-        "POST /api/v2/social-campaigns/{campaign_id}/posts/{post_id}/generate-platform",
-        "PUT /api/v2/social-campaigns/{campaign_id}/posts/{post_id}/platforms/{platform}",
-        "POST /api/v2/social-campaigns/{campaign_id}/posts/{post_id}/image-edit",
+        "POST /api/v2/social-campaigns/{campaign_id}/posts/{post_id}/generate-variations",
+        "POST /api/v2/social-campaigns/{campaign_id}/posts/{post_id}/generate-more-variations",
+        "DELETE /api/v2/social-campaigns/{campaign_id}/posts/{post_id}/variations/{variation_id}",
+        "POST /api/v2/social-campaigns/{campaign_id}/posts/{post_id}/variations/{variation_id}/retry",
+        "POST /api/v2/social-campaigns/{campaign_id}/posts/{post_id}/variations/{variation_id}/generate-aspect-ratio",
+        "POST /api/v2/social-campaigns/{campaign_id}/posts/{post_id}/variations/{variation_id}/edit-image",
+        "POST /api/v2/social-campaigns/{campaign_id}/posts/{post_id}/variations/{variation_id}/accept-edit",
+        "PUT /api/v2/social-campaigns/{campaign_id}/posts/{post_id}/caption",
+        "POST /api/v2/social-campaigns/{campaign_id}/posts/{post_id}/generate-caption",
         "POST /api/v2/social-campaigns/{campaign_id}/exports/zip",
         "POST /api/v2/social-campaigns/{campaign_id}/posts/{post_id}/exports/zip",
-        "GET /api/v2/social-campaigns/{campaign_id}/exports/{export_id}"
+        "GET /api/v2/social-campaigns/{campaign_id}/exports/{export_id}",
+        "GET /api/v2/social-campaigns/{campaign_id}/citations",
+        "GET /api/v2/social-campaigns/{campaign_id}/posts/{post_id}/citations",
+        "GET /api/v2/social-campaigns/{campaign_id}/posts/{post_id}/platforms/{platform}/citations",
+        "GET /api/v2/social-campaigns/{campaign_id}/posts/{post_id}/platforms/{platform}/history",
+        "GET /api/v2/social-campaigns/{campaign_id}/posts/{post_id}/platforms/{platform}/edits"
       ]
     },
     {
@@ -179,7 +247,7 @@
       "command": "claude skills install ./marketplace.json",
       "manual": {
         "description": "Add skill paths to your CLAUDE.md",
-        "example": "## Agent Skills\n\nLoad the following skill files before performing any Layerproof API operations:\n\n- skills/workspaces/SKILL.md\n- skills/projects/SKILL.md\n- skills/public-files/SKILL.md\n- skills/project-files/SKILL.md\n- skills/slide-decks/SKILL.md\n- skills/slides/SKILL.md\n- skills/themes/SKILL.md\n- skills/exports/SKILL.md\n- skills/social-campaigns/SKILL.md\n- skills/jobs/SKILL.md"
+        "example": "## Agent Skills\n\nLoad the following skill files before performing any Layerproof API operations:\n\n- skills/workspaces/SKILL.md\n- skills/projects/SKILL.md\n- skills/public-files/SKILL.md\n- skills/project-files/SKILL.md\n- skills/slide-decks/SKILL.md\n- skills/slides/SKILL.md\n- skills/themes/SKILL.md\n- skills/tones/SKILL.md\n- skills/exports/SKILL.md\n- skills/social-campaigns/SKILL.md\n- skills/jobs/SKILL.md"
       }
     },
     "cursor": {
