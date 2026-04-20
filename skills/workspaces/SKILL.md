@@ -7,7 +7,7 @@ description: Public API workspace management (X-API-KEY). Create, list, get, upd
 
 ## Description
 
-Manage workspaces. This skill documents the **public API** at `/api/v2/workspaces` (PublicApiWorkspaceController). Authenticate with `X-API-KEY` header. List supports pagination with `page` and `page_size` (default 20, max 100).
+Manage workspaces. This skill documents the **public API** at `/api/v2/workspaces` (PublicApiWorkspaceController). Authenticate with `X-API-KEY` header. List uses `page` and `page_size` (`page_size` default 20, max 100). **For the first page of results, pass `page=0` explicitly.**
 
 ---
 
@@ -36,12 +36,41 @@ type PublicApiWorkspaceResponse = {
 };
 
 // --- List (GET) ---
-// Query: page (default 20), page_size (default 20, max 100)
+// Query: page (use 0 for first page), page_size (default 20, max 100)
 type PublicApiWorkspaceListResponse = {
   data: PublicApiWorkspaceResponse[];
   total: number;
   page: number;
   page_size: number;
+};
+
+// --- Restore (POST /{workspace_id}/restore) ---
+type PublicApiRestoreWorkspaceRequest = {
+  restore_projects?: boolean;  // default true
+};
+type PublicApiRestoreWorkspaceResponse = {
+  workspace_restored: boolean;
+  projects_restored: number;
+};
+
+// --- List files (GET /{workspace_id}/files) ---
+// Optional query: type (file classification filter, if supported by server)
+type PublicApiWorkspaceFileEntry = {
+  id: string;
+  name: string;
+  path: string;
+  file_type: string;
+  mime_type: string;
+  size: number;
+  uploaded_at: string;
+  uploaded_by: string;
+  status: string;
+  presigned_url?: string | null;
+  url_expires_at?: string | null;
+};
+type PublicApiWorkspaceFilesResponse = {
+  files: PublicApiWorkspaceFileEntry[];
+  total: number;
 };
 
 // --- Update (PUT) ---
@@ -69,10 +98,56 @@ curl -X POST "$LAYERPROOF_BASE_URL/api/v2/workspaces" \
 
 ## List Workspaces
 
-Query: `page` (default 20), `page_size` (default 20, max 100). Response: `PublicApiWorkspaceListResponse`.
+Query: `page` (use `0` for the first page), `page_size` (default 20, max 100). Response: `PublicApiWorkspaceListResponse`.
 
 ```bash
 curl "$LAYERPROOF_BASE_URL/api/v2/workspaces?page=0&page_size=20" \
+  -H "X-API-KEY: $LAYERPROOF_API_KEY"
+```
+
+---
+
+## List Deleted Workspaces
+
+Soft-deleted workspaces for the current user. Query: `page` (default 0), `page_size` (default 20, max 100).
+
+```bash
+curl "$LAYERPROOF_BASE_URL/api/v2/workspaces/deleted?page=0&page_size=20" \
+  -H "X-API-KEY: $LAYERPROOF_API_KEY"
+```
+
+---
+
+## Restore Workspace
+
+Body optional: `{"restore_projects": true}` (default). Response: `PublicApiRestoreWorkspaceResponse`.
+
+```bash
+curl -X POST "$LAYERPROOF_BASE_URL/api/v2/workspaces/<workspace_id>/restore" \
+  -H "Content-Type: application/json" \
+  -H "X-API-KEY: $LAYERPROOF_API_KEY" \
+  -d '{"restore_projects":true}'
+```
+
+---
+
+## Permanently Delete Workspace
+
+Hard-deletes a workspace that is already soft-deleted. Response: 204 No Content.
+
+```bash
+curl -X DELETE "$LAYERPROOF_BASE_URL/api/v2/workspaces/<workspace_id>/permanently" \
+  -H "X-API-KEY: $LAYERPROOF_API_KEY"
+```
+
+---
+
+## List Files in Workspace
+
+Lists files in the workspace shared working directory. Optional query: `type` (file classification).
+
+```bash
+curl "$LAYERPROOF_BASE_URL/api/v2/workspaces/<workspace_id>/files" \
   -H "X-API-KEY: $LAYERPROOF_API_KEY"
 ```
 
@@ -123,6 +198,10 @@ When the user asks to manage workspaces (create, list, get, update, delete), do 
 |-------------|----------|--------|
 | Create workspace | `/api/v2/workspaces` | POST |
 | List workspaces | `/api/v2/workspaces?page=0&page_size=20` | GET |
+| List deleted workspaces | `/api/v2/workspaces/deleted?page=0&page_size=20` | GET |
+| Restore deleted workspace | `/api/v2/workspaces/{workspaceId}/restore` | POST |
+| Permanently delete (after soft delete) | `/api/v2/workspaces/{workspaceId}/permanently` | DELETE |
+| List files in workspace | `/api/v2/workspaces/{workspaceId}/files` | GET |
 | Get workspace by ID | `/api/v2/workspaces/{workspaceId}` | GET |
 | Update workspace | `/api/v2/workspaces/{workspaceId}` | PUT |
 | Delete workspace | `/api/v2/workspaces/{workspaceId}` | DELETE |

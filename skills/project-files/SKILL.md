@@ -1,6 +1,6 @@
 ---
 name: project-files
-description: Public API project file management (X-API-KEY). Prepare upload/update, confirm, get file, download URL, delete. Types follow PublicApiProjectFileController (/api/v2/projects/{projectId}/...).
+description: Public API project file management (X-API-KEY). Prepare upload/update, confirm, AI files, subdirectories, resolve assets/paths, preview URL, get, download, delete. PublicApiProjectFileController.
 ---
 
 # Skill: Project Files
@@ -62,6 +62,60 @@ type FileResponse = {
 type DownloadUrlResponse = {
   download_url: string;
   expires_at: string;
+};
+
+// --- Preview URL (POST .../preview-url) ---
+type PreviewUrlResponse = {
+  preview_url: string;
+  expires_at: string;
+};
+
+// --- Create subdirectory (POST .../subdirectories) ---
+type CreateDirectoryRequest = { name: string };
+type CreateDirectoryResponse = { id: string; name: string };
+
+// --- Resolve assets (POST .../resolve-assets) ---
+type ResolveAssetsRequest = { paths: string[] };
+type ResolvedAsset = {
+  original_path: string;
+  presigned_url: string | null;
+  error: string | null;
+};
+type ResolveAssetsResponse = { assets: ResolvedAsset[] };
+
+// --- Resolve paths to IDs (POST .../resolve-paths-to-ids) ---
+type ResolvePathsToIdsRequest = { paths: string[] };
+type ResolvedPathToId = {
+  original_path: string;
+  file_id: string | null;
+  error: string | null;
+};
+type ResolvePathsToIdsResponse = { resolved: ResolvedPathToId[] };
+
+// --- AI file (POST .../ai-files) — 201 ---
+type CreateAiFileRequest = {
+  filename: string;
+  path: string;
+  workflow_type: string;
+  project_type_id?: string | null;
+  form_input_data?: Record<string, unknown> | null;
+};
+type CreateAiFileResponse = {
+  file_id: string;
+  filename: string;
+  workflow_type: string;
+};
+
+// --- Trigger / cancel AI file ---
+type TriggerAiFileRequest = { form_input_data?: Record<string, unknown> | null };
+type TriggerAiFileResponse = {
+  activity_id: string;
+  workflow_type: string;
+  live_object_id: string;
+};
+type CancelAiFileResponse = {
+  live_object_id: string;
+  cancelled_children: number;
 };
 ```
 
@@ -139,6 +193,91 @@ curl -X DELETE "$LAYERPROOF_BASE_URL/api/v2/projects/<project_id>/files/<file_id
 
 ---
 
+## Create Subdirectory
+
+Creates a child directory under `directory_id`. Response (201): `CreateDirectoryResponse`.
+
+```bash
+curl -X POST "$LAYERPROOF_BASE_URL/api/v2/projects/<project_id>/directories/<directory_id>/subdirectories" \
+  -H "Content-Type: application/json" \
+  -H "X-API-KEY: $LAYERPROOF_API_KEY" \
+  -d '{"name":"assets"}'
+```
+
+---
+
+## Preview URL (HTML)
+
+For HTML files: processes assets and returns a presigned preview URL.
+
+```bash
+curl -X POST "$LAYERPROOF_BASE_URL/api/v2/projects/<project_id>/directories/<directory_id>/files/<file_id>/preview-url" \
+  -H "X-API-KEY: $LAYERPROOF_API_KEY"
+```
+
+---
+
+## Resolve Asset Paths to URLs
+
+Body: `{ "paths": ["./img.png", "..."] }`. Response: `ResolveAssetsResponse`.
+
+```bash
+curl -X POST "$LAYERPROOF_BASE_URL/api/v2/projects/<project_id>/directories/<directory_id>/resolve-assets" \
+  -H "Content-Type: application/json" \
+  -H "X-API-KEY: $LAYERPROOF_API_KEY" \
+  -d '{"paths":["/relative/path.png"]}'
+```
+
+---
+
+## Resolve Paths to Live Object IDs
+
+Body: `{ "paths": ["~/file.txt", "/abs/path"] }`. Response: `ResolvePathsToIdsResponse`.
+
+```bash
+curl -X POST "$LAYERPROOF_BASE_URL/api/v2/projects/<project_id>/directories/<directory_id>/resolve-paths-to-ids" \
+  -H "Content-Type: application/json" \
+  -H "X-API-KEY: $LAYERPROOF_API_KEY" \
+  -d '{"paths":["/notes.txt"]}'
+```
+
+---
+
+## Create AI File
+
+Creates an `.ai` configuration file in the directory. Response (201): `CreateAiFileResponse`.
+
+```bash
+curl -X POST "$LAYERPROOF_BASE_URL/api/v2/projects/<project_id>/directories/<directory_id>/ai-files" \
+  -H "Content-Type: application/json" \
+  -H "X-API-KEY: $LAYERPROOF_API_KEY" \
+  -d '{"filename":"workflow.ai","path":"/","workflow_type":"YOUR_WORKFLOW"}'
+```
+
+---
+
+## Trigger AI File Workflow
+
+Poll `GET /api/v2/jobs/{activity_id}` after.
+
+```bash
+curl -X POST "$LAYERPROOF_BASE_URL/api/v2/projects/<project_id>/ai-files/<ai_file_id>/trigger" \
+  -H "Content-Type: application/json" \
+  -H "X-API-KEY: $LAYERPROOF_API_KEY" \
+  -d '{}'
+```
+
+---
+
+## Cancel AI File Workflow
+
+```bash
+curl -X POST "$LAYERPROOF_BASE_URL/api/v2/projects/<project_id>/ai-files/<ai_file_id>/cancel" \
+  -H "X-API-KEY: $LAYERPROOF_API_KEY"
+```
+
+---
+
 ## Agent behavior
 
 When the user asks to manage project files (upload, update, confirm, download, delete), do the following.
@@ -155,6 +294,13 @@ Base path: `/api/v2/projects/{projectId}`. Replace `project_id`, `directory_id`,
 | Get download URL | `.../files/{fileId}/download-url` | GET |
 | Get file metadata | `.../files/{fileId}` | GET |
 | Delete file | `.../files/{fileId}` | DELETE |
+| Create subdirectory | `.../directories/{directoryId}/subdirectories` | POST |
+| HTML preview URL | `.../directories/{directoryId}/files/{fileId}/preview-url` | POST |
+| Resolve paths → presigned URLs | `.../directories/{directoryId}/resolve-assets` | POST |
+| Resolve paths → file IDs | `.../directories/{directoryId}/resolve-paths-to-ids` | POST |
+| Create AI file | `.../directories/{directoryId}/ai-files` | POST |
+| Trigger AI file | `.../ai-files/{aiFileId}/trigger` | POST |
+| Cancel AI file | `.../ai-files/{aiFileId}/cancel` | POST |
 
 ### 2. Build and run the request
 

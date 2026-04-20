@@ -4,7 +4,7 @@ type: skill-pack
 name: layerproof-api
 description: Skill pack for interacting with the Layerproof API including workspaces, projects, slide decks, files, themes, exports, and jobs.
 author: compilet-dev
-version: 1.0.0
+version: 1.1.0
 
 includes:
 
@@ -15,7 +15,9 @@ includes:
 * skills/slide-decks/SKILL.md
 * skills/slides/SKILL.md
 * skills/themes/SKILL.md
+* skills/tones/SKILL.md
 * skills/exports/SKILL.md
+* skills/social-campaigns/SKILL.md
 * skills/jobs/SKILL.md
 
 ---
@@ -101,7 +103,9 @@ Each module corresponds to a Layerproof API resource.
 | Slide Decks   | `skills/slide-decks/SKILL.md`   | Generate outlines and slide content |
 | Slides        | `skills/slides/SKILL.md`        | Edit slide images and content       |
 | Themes        | `skills/themes/SKILL.md`        | Generate and apply visual themes    |
-| Exports       | `skills/exports/SKILL.md`       | Export projects as PNG or PPTX      |
+| Tones         | `skills/tones/SKILL.md`         | Tone presets and apply to deck      |
+| Exports       | `skills/exports/SKILL.md`       | Export PNG, PPTX, or video          |
+| Social campaigns | `skills/social-campaigns/SKILL.md` | Social campaign projects       |
 | Jobs          | `skills/jobs/SKILL.md`          | Poll async job status               |
 
 ---
@@ -141,11 +145,11 @@ Example workflows (the agent should automatically select the correct skill modul
 5. **Slide decks** — POST `.../outline/generate` with `prompt`, `slide_count`, optional `file_s3_keys`, `language`; capture `activity_id`.
 6. **Jobs** — Poll `GET /api/v2/jobs/{activity_id}` until `status` is DONE (or CANCELED); on failure, report `failure_reason`.
 7. **Slide decks** — GET deck to read `outline`; optionally PUT `.../outline` to tweak sections (title, sections, key_points, visual_suggestion).
-8. **Slide decks** — If theme was generated, PUT `.../settings` with `theme_id` (or use apply-theme endpoint per skill). Then POST `.../batch-generate` (optionally with `generation_type`, `aspect_ratio`); capture `activity_id`.
+8. **Themes / slide decks** — If a theme was generated, POST `/api/v2/themes/apply` with `slide_deck_id` and `theme_id` (optional `regenerate_slides`). Then POST `.../slides/batch-generate` (optionally with `generation_type`, `aspect_ratio`); capture `activity_id`.
 9. **Jobs** — Poll `GET /api/v2/jobs/{activity_id}` until DONE.
 10. **Slide decks** — GET deck again; if a single slide needs regeneration, POST `.../slides/{sectionId}/generate-transcript` or `.../generate-image` etc., then poll job.
 11. **Slides** (optional) — For a specific slide: POST image-edit or object-removal → poll job → POST accept-image-edit with `live_object_id`.
-12. **Exports** — POST `.../projects/{projectId}/exports/pptx` (or png); capture `exportId`; poll GET `.../exports/{exportId}` until COMPLETED; present `downloadUrl` to user.
+12. **Exports** — POST `.../projects/{projectId}/exports/pptx`, `.../exports/png`, or `.../exports/video`; capture `export_id`; poll GET `.../exports/{export_id}` until COMPLETED; present `download_url` to user.
 
 ## Workflow B: Multi-format export and error handling
 
@@ -177,7 +181,9 @@ Agents should load the following files when interacting with Layerproof:
 * skills/slide-decks/SKILL.md
 * skills/slides/SKILL.md
 * skills/themes/SKILL.md
+* skills/tones/SKILL.md
 * skills/exports/SKILL.md
+* skills/social-campaigns/SKILL.md
 * skills/jobs/SKILL.md
 
 Each skill file contains:
@@ -214,7 +220,11 @@ agent-skill-layerproof
    │   └─ SKILL.md
    ├─ themes
    │   └─ SKILL.md
+   ├─ tones
+   │   └─ SKILL.md
    ├─ exports
+   │   └─ SKILL.md
+   ├─ social-campaigns
    │   └─ SKILL.md
    └─ jobs
        └─ SKILL.md

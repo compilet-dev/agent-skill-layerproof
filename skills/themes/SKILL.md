@@ -1,6 +1,6 @@
 ---
 name: themes
-description: Public API theme management (X-API-KEY). List, get, generate, and apply themes. Types follow PublicThemeController (/api/v2/themes).
+description: Public API theme management (X-API-KEY). List, get, save, update, delete, generate, regenerate, apply, unapply. PublicThemeController (/api/v2/themes).
 ---
 
 # Skill: Theme Management
@@ -38,7 +38,7 @@ type PublicThemeResponse = {
 
 // --- Generate Theme (POST) — async ---
 type PublicGenerateThemeRequest = {
-  prompt: string;           // required, 1–5000 chars
+  prompt: string;           // required, max 5000 chars
   project_id?: string | null;  // optional THEME project UUID; if omitted, a project is created automatically
 };
 type PublicGenerateThemeResponse = {
@@ -58,6 +58,44 @@ type PublicApplyThemeResponse = {
   slide_deck_id: string;
   applied: boolean;        // true when applied successfully
   activity_id: string | null;  // set when regenerate_slides is true – poll GET /api/v2/jobs/{activity_id}
+};
+
+// --- Save theme (POST /api/v2/themes) — 201 ---
+type PublicSaveThemeRequest = {
+  name: string;                              // required, max 256
+  visual_style_description: string;         // required, max 5000
+  preview_s3_key: string;                    // required — S3 key of preview image
+  description?: string | null;              // max 1000
+  source_prompt?: string | null;
+  source_project_id?: string | null;
+  tags?: string[] | null;
+};
+
+// --- Update theme (PUT /{theme_id}) ---
+type PublicUpdateThemeRequest = {
+  name?: string | null;
+  description?: string | null;
+  tags?: string[] | null;
+  visual_style_description?: string | null;
+};
+
+// --- Regenerate theme (POST /{theme_id}/regenerate) — 202 ---
+type PublicRegenerateThemeRequest = {
+  project_id: string;  // UUID — project whose working dir is used
+  adjustment_prompt: string;
+  reference_image_paths?: string[] | null;
+  preview_only?: boolean;
+};
+type PublicRegenerateThemeResponse = {
+  activity_id: string;
+  theme_id: string;
+  live_object_id: string;
+};
+
+// --- Unapply (POST /unapply) ---
+type PublicUnapplyThemeRequest = {
+  project_id: string;
+  slide_deck_id: string;
 };
 ```
 
@@ -133,6 +171,80 @@ curl -X POST "$LAYERPROOF_BASE_URL/api/v2/themes/apply" \
 
 ---
 
+## Save Theme (manual)
+
+Creates a saved private theme. Requires `visual_style_description` and `preview_s3_key` (upload preview via project/public files first). Response (201): `PublicThemeResponse`.
+
+```bash
+curl -X POST "$LAYERPROOF_BASE_URL/api/v2/themes" \
+  -H "Content-Type: application/json" \
+  -H "X-API-KEY: $LAYERPROOF_API_KEY" \
+  -d '{"name":"My brand","visual_style_description":"Minimal dark UI, rounded cards","preview_s3_key":"<s3_key>"}'
+```
+
+---
+
+## Update Theme
+
+Request body: `PublicUpdateThemeRequest`. Response: `PublicThemeResponse`.
+
+```bash
+curl -X PUT "$LAYERPROOF_BASE_URL/api/v2/themes/<theme_id>" \
+  -H "Content-Type: application/json" \
+  -H "X-API-KEY: $LAYERPROOF_API_KEY" \
+  -d '{"name":"Renamed theme"}'
+```
+
+---
+
+## Delete Theme
+
+Soft-deletes a user-owned theme. Response: 204 No Content.
+
+```bash
+curl -X DELETE "$LAYERPROOF_BASE_URL/api/v2/themes/<theme_id>" \
+  -H "X-API-KEY: $LAYERPROOF_API_KEY"
+```
+
+---
+
+## Regenerate Theme (async)
+
+Request body: `PublicRegenerateThemeRequest`. Response (202): `PublicRegenerateThemeResponse`. Poll `GET /api/v2/jobs/{activity_id}`.
+
+```bash
+curl -X POST "$LAYERPROOF_BASE_URL/api/v2/themes/<theme_id>/regenerate" \
+  -H "Content-Type: application/json" \
+  -H "X-API-KEY: $LAYERPROOF_API_KEY" \
+  -d '{"project_id":"<project_uuid>","adjustment_prompt":"More contrast, warmer palette"}'
+```
+
+---
+
+## Unapply Theme from Slide Deck
+
+Removes applied theme from a deck. Request body: `PublicUnapplyThemeRequest`. Response: 204 No Content.
+
+```bash
+curl -X POST "$LAYERPROOF_BASE_URL/api/v2/themes/unapply" \
+  -H "Content-Type: application/json" \
+  -H "X-API-KEY: $LAYERPROOF_API_KEY" \
+  -d '{"project_id":"<project_uuid>","slide_deck_id":"<slide_deck_uuid>"}'
+```
+
+---
+
+## List My Themes (by user)
+
+Query: `offset`, `limit`, optional `visibility` (`PRIVATE` \| `SYSTEM` \| `SHARED`), optional `search`. Response: `PublicThemeListResponse`.
+
+```bash
+curl "$LAYERPROOF_BASE_URL/api/v2/themes/by-user-id?offset=0&limit=20" \
+  -H "X-API-KEY: $LAYERPROOF_API_KEY"
+```
+
+---
+
 ## Agent behavior
 
 When the user asks to work with themes (list, get, generate, apply), do the following.
@@ -143,8 +255,14 @@ When the user asks to work with themes (list, get, generate, apply), do the foll
 |-------------|----------|--------|
 | List/browse themes, search themes | `/api/v2/themes` | GET |
 | Get one theme by ID | `/api/v2/themes/<theme_id>` | GET |
-| Create a new theme from a prompt | `/api/v2/themes/generate` | POST |
+| Save a theme manually | `/api/v2/themes` | POST |
+| Update theme metadata | `/api/v2/themes/<theme_id>` | PUT |
+| Delete theme | `/api/v2/themes/<theme_id>` | DELETE |
+| Generate theme from prompt (async) | `/api/v2/themes/generate` | POST |
+| Regenerate / adjust theme (async) | `/api/v2/themes/<theme_id>/regenerate` | POST |
 | Apply a theme to a slide deck | `/api/v2/themes/apply` | POST |
+| Unapply theme from deck | `/api/v2/themes/unapply` | POST |
+| List current user’s themes | `/api/v2/themes/by-user-id` | GET |
 
 ### 2. Build and run the request
 
@@ -178,12 +296,12 @@ When the user asks to work with themes (list, get, generate, apply), do the foll
 2. POST `/api/v2/themes/generate` with `{"prompt":"corporate blue"}`; capture `activity_id` and `theme_id`.
 3. Poll `GET /api/v2/jobs/{activity_id}` until status is DONE (or CANCELED). If DONE, theme is ready; if failed, report `failure_reason`.
 4. Resolve projectId and slideDeckId (projects + slide-deck). POST or PUT the slide-deck theme/settings endpoint with `theme_id` (e.g. PUT `.../slide-deck/.../settings` with `{"theme_id":"<theme_id>"}`).
-5. If the API supports "apply theme and regenerate": use that endpoint with `regenerate_slides: true`; capture `activity_id` and poll jobs until DONE. Otherwise: apply theme then use slide-deck batch-generate; poll that job.
+5. Use **POST `/api/v2/themes/apply`** with `regenerate_slides: true` if you want slide images regenerated; capture `activity_id` and poll jobs until DONE. Otherwise apply with `regenerate_slides: false` or omit.
 
 **Workflow C — User**: "I have a theme ID; apply it to deck X and only update the look (no slide regeneration)."
 
-1. Resolve slideDeckId from project. PUT `.../settings` with `{"theme_id":"<theme_id>"}` (or apply-theme without regeneration).
-2. Confirm with GET deck; `slide_deck.theme` or similar should reflect the new theme. No job polling needed if no regeneration.
+1. **POST `/api/v2/themes/apply`** with `{"slide_deck_id":"<slide_deck_uuid>","theme_id":"<theme_uuid>"}` (omit `regenerate_slides` or set `false`).
+2. Confirm with GET deck; no job polling needed unless `regenerate_slides` was true.
 
 ---
 

@@ -135,8 +135,10 @@ npx skills add compilet-dev/agent-skill-layerproof -g
 | **project-files** | `skills/project-files/SKILL.md` | Manage files inside project directories (prepare, update, confirm, get, delete) |
 | **slide-decks** | `skills/slide-decks/SKILL.md` | Generate outlines, batch/single slide content, transcripts, images, themes, audio, import PPTX |
 | **slides** | `skills/slides/SKILL.md` | AI image editing, object removal, text extraction, accept edits, revert, save Konva canvas |
-| **themes** | `skills/themes/SKILL.md` | List, get, generate, and apply visual themes to slide decks |
-| **exports** | `skills/exports/SKILL.md` | Export projects as PNG ZIP or PPTX; poll status; download when complete |
+| **themes** | `skills/themes/SKILL.md` | List, save, update, generate, regenerate, apply, and unapply visual themes |
+| **tones** | `skills/tones/SKILL.md` | Tone presets: CRUD, apply to deck, save-as-preset, duplicate |
+| **exports** | `skills/exports/SKILL.md` | Export PNG ZIP, PPTX, or video; poll status; download when complete |
+| **social-campaigns** | `skills/social-campaigns/SKILL.md` | Social campaign projects: generate, topics, variations, exports, citations |
 | **jobs** | `skills/jobs/SKILL.md` | Poll any async job by activityId (outline, batch generate, export, theme, etc.) |
 
 ---
@@ -227,10 +229,14 @@ The agent reads the relevant SKILL.md, executes `curl` commands directly against
 | Operation | Method | Path |
 |-----------|--------|------|
 | Create | POST | `/api/v2/workspaces` |
-| List | GET | `/api/v2/workspaces?page=0&pageSize=20` |
+| List | GET | `/api/v2/workspaces?page=0&page_size=20` |
+| List deleted | GET | `/api/v2/workspaces/deleted` |
 | Get | GET | `/api/v2/workspaces/{workspaceId}` |
+| List files | GET | `/api/v2/workspaces/{workspaceId}/files` |
 | Update | PUT | `/api/v2/workspaces/{workspaceId}` |
 | Delete | DELETE | `/api/v2/workspaces/{workspaceId}` |
+| Restore | POST | `/api/v2/workspaces/{workspaceId}/restore` |
+| Permanent delete | DELETE | `/api/v2/workspaces/{workspaceId}/permanently` |
 
 ### projects — `/api/v2/projects`
 
@@ -238,11 +244,19 @@ The agent reads the relevant SKILL.md, executes `curl` commands directly against
 |-----------|--------|------|
 | Create | POST | `/api/v2/projects` |
 | List | GET | `/api/v2/projects` |
+| Recent | GET | `/api/v2/projects/list/recent` |
+| Deleted | GET | `/api/v2/projects/deleted` |
 | Get | GET | `/api/v2/projects/{projectId}` |
 | Update | PUT | `/api/v2/projects/{projectId}` |
+| Visibility | PUT | `/api/v2/projects/{projectId}/visibility` |
 | Delete | DELETE | `/api/v2/projects/{projectId}` |
+| Restore | POST | `/api/v2/projects/{projectId}/restore` |
+| Permanent delete | DELETE | `/api/v2/projects/{projectId}/permanently` |
+| Clone | POST | `/api/v2/projects/{projectId}/clone` |
+| Vote / unvote | POST / DELETE | `/api/v2/projects/{projectId}/vote` |
+| Public list | GET | `/api/v2/projects/public` |
 
-> The response includes `slideDeckId` — use this as `{slideDeckId}` in slide-deck endpoints.
+> The response includes `slide_deck_id` — use this as `{slideDeckId}` in slide-deck endpoints.
 
 ### public-files — `/api/v2/files`
 
@@ -265,6 +279,11 @@ The agent reads the relevant SKILL.md, executes `curl` commands directly against
 | Get | GET | `.../files/{fileId}` |
 | Download URL | GET | `.../files/{fileId}/download-url` |
 | Delete | DELETE | `.../files/{fileId}` |
+| Subdirectory | POST | `.../directories/{directoryId}/subdirectories` |
+| Resolve assets / paths | POST | `.../directories/{directoryId}/resolve-assets`, `.../resolve-paths-to-ids` |
+| Preview HTML | POST | `.../directories/{directoryId}/files/{fileId}/preview-url` |
+| AI file | POST | `.../directories/{directoryId}/ai-files` |
+| AI trigger / cancel | POST | `.../ai-files/{aiFileId}/trigger`, `.../ai-files/{aiFileId}/cancel` |
 
 ### slide-decks — `/api/v2/projects/{projectId}/slide-deck/{slideDeckId}`
 
@@ -287,6 +306,7 @@ The agent reads the relevant SKILL.md, executes `curl` commands directly against
 | Import PPTX (prepare) | POST | `.../import/prepare-upload` |
 | Import PPTX | POST | `.../import` |
 | Batch generate layout (async) | POST | `.../slides/batch-generate-layout` |
+| Citations | GET | `.../citations`, `.../citations/slide/{slideIndex}`, `.../citations/{citationId}` |
 
 ### slides — `/api/v2/projects/{projectId}/slides`
 
@@ -308,7 +328,21 @@ The agent reads the relevant SKILL.md, executes `curl` commands directly against
 | List | GET | `/api/v2/themes?offset=0&limit=20` |
 | Get by ID | GET | `/api/v2/themes/{themeId}` |
 | Generate (async) | POST | `/api/v2/themes/generate` |
+| Save / update / delete | POST / PUT / DELETE | `/api/v2/themes`, `/api/v2/themes/{themeId}` |
+| Regenerate (async) | POST | `/api/v2/themes/{themeId}/regenerate` |
 | Apply | POST | `/api/v2/themes/apply` |
+| Unapply | POST | `/api/v2/themes/unapply` |
+| By user | GET | `/api/v2/themes/by-user-id` |
+
+### tones — `/api/v2/tones`
+
+| Operation | Method | Path |
+|-----------|--------|------|
+| List / create | GET / POST | `/api/v2/tones` |
+| Get / update / delete | GET / PUT / DELETE | `/api/v2/tones/{toneId}` |
+| Apply to deck | POST | `/api/v2/tones/{toneId}/apply` |
+| Save as preset | POST | `/api/v2/tones/save-as-preset` |
+| Duplicate | POST | `/api/v2/tones/{toneId}/duplicate` |
 
 ### exports — `/api/v2/projects/{projectId}/exports`
 
@@ -316,8 +350,13 @@ The agent reads the relevant SKILL.md, executes `curl` commands directly against
 |-----------|--------|------|
 | Export PNG ZIP (async) | POST | `.../exports/png` |
 | Export PPTX (async) | POST | `.../exports/pptx` |
+| Export video (async) | POST | `.../exports/video` |
 | Get export status | GET | `.../exports/{exportId}` |
 | Cancel export | POST | `.../exports/{exportId}/cancel` |
+
+### social-campaigns — `/api/v2/social-campaigns`
+
+See `skills/social-campaigns/SKILL.md` for the full table (campaign CRUD, generate, confirm outline, topics, variations, captions, theme, ZIP exports, citations). Async work polls **`GET /api/v2/jobs/{activityId}`**; ZIP exports poll **`GET .../social-campaigns/{campaignId}/exports/{exportId}`**.
 
 ### jobs — `/api/v2/jobs`
 
