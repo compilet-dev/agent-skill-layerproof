@@ -1,6 +1,6 @@
 ---
 name: social-campaigns
-description: Public API social campaigns (X-API-KEY). CRUD campaigns, generate, confirm outline, topics, variations, captions, exports, theme, citations. PublicApiSocialCampaignController (/api/v2/social-campaigns).
+description: Public API social campaigns (X-API-KEY). CRUD campaigns, outline topics, generate/cancel generation, confirm outline, topics, variations/captions/images, exports (ZIP + bulk rich), theme, citations/history. PublicApiSocialCampaignController (/api/v2/social-campaigns).
 ---
 
 # Skill: Social Campaigns
@@ -9,8 +9,9 @@ description: Public API social campaigns (X-API-KEY). CRUD campaigns, generate, 
 
 **Social campaigns** are projects with `project_kind` **SOCIAL_CAMPAIGN**. This skill documents **PublicApiSocialCampaignController** at `/api/v2/social-campaigns`. Authenticate with `X-API-KEY`.
 
-- **Campaign generation** returns `activity_id` — poll **`GET /api/v2/jobs/{activity_id}`** (same as slide workflows).
+- **Campaign generation, variations, captions, theme, image edits** return `activity_id` — poll **`GET /api/v2/jobs/{activity_id}`** (same as slide workflows).
 - **ZIP exports** return `export_id` — poll **`GET /api/v2/social-campaigns/{campaign_id}/exports/{export_id}`** (not the jobs endpoint).
+- JSON uses **snake_case** property names (e.g. `topic_ids`, `live_object_ids`).
 
 ---
 
@@ -42,6 +43,24 @@ type PublicApiCampaignListResponse = {
   has_more: boolean;
 };
 
+// --- Get campaign: posts include variant_images (presigned URLs, ~1h) ---
+type PublicApiPostVariantImage = {
+  variation_id: string;
+  aspect_ratio_image_urls: Record<string, string>; // ratio key -> presigned GET URL; legacy single path may use key "default"
+};
+type PublicApiPostSummary = {
+  post_id: string;
+  live_object_id: string;
+  title?: string | null;
+  status: string;
+  topic?: string | null;
+  core_message?: string | null;
+  key_points?: string[] | null;
+  visual_suggestion?: string | null;
+  version?: number | null;
+  variant_images?: PublicApiPostVariantImage[];
+};
+
 // --- Generate campaign ---
 type PublicApiTrendSnapshot = {
   key: string;
@@ -66,12 +85,17 @@ type PublicApiGenerateCampaignRequest = {
   target_topic_count?: number | null;
   trend_snapshot?: PublicApiTrendSnapshot | null;
   trend_snapshots?: PublicApiTrendSnapshot[] | null;
-  auto_select?: boolean;  // default false — if true, skips outline confirmation
+  auto_select?: boolean; // MUST be false (do not use true)
 };
 type PublicApiGenerateCampaignResponse = {
   campaign_live_object_id: string;
   activity_id: string;
   workflow_type: string;
+};
+
+// --- Cancel generation ---
+type CancelSocialCampaignGenerationRequest = {
+  live_object_ids: string[]; // non-empty; e.g. generation_stream, image_variation, social_post_image_edit roots
 };
 
 // --- Confirm outline (after outline step when auto_select is false) ---
@@ -112,6 +136,26 @@ type PublicApiCampaignExportStatusResponse = {
   file_size_bytes?: number | null;
   error_message?: string | null;
 };
+
+type PostExportItem = {
+  topic_id: string;
+  variation_ids?: string[] | null;
+};
+type ExportPostsBulkRequest = {
+  posts?: PostExportItem[] | null; // omit or null = all posts
+  format?: string; // default "MD"
+  aspect_ratios?: string[] | null;
+};
+
+// --- Theme ---
+type PublicApiGenerateCampaignThemeRequest = {
+  prompt: string;
+  reference_image_paths?: string[] | null;
+};
+type PublicApiGenerateCampaignThemeResponse = {
+  activity_id: string;
+  live_object_id: string;
+};
 ```
 
 ---
@@ -136,11 +180,22 @@ curl -X POST "$LAYERPROOF_BASE_URL/api/v2/social-campaigns" \
 
 ---
 
-## Generate & confirm
+## Outline topics
+
+| Action | Method | Path |
+|--------|--------|------|
+| List outline (topic options, etc.) | GET | `/api/v2/social-campaigns/{campaign_id}/outline-topics` |
+
+Returns the campaign `outline_topics` array (per-topic options with `core_message`, `key_points`, etc.). Empty when no outline exists or after confirm cleared it. `topic_id` may be synthesized for legacy rows.
+
+---
+
+## Generate, cancel & confirm
 
 | Action | Method | Path |
 |--------|--------|------|
 | Generate from prompt | POST | `/api/v2/social-campaigns/{campaign_id}/generate` |
+| Cancel generation | POST | `/api/v2/social-campaigns/{campaign_id}/cancel-generation` |
 | Confirm outline picks | POST | `/api/v2/social-campaigns/{campaign_id}/confirm-outline` |
 
 ```bash
@@ -150,7 +205,11 @@ curl -X POST "$LAYERPROOF_BASE_URL/api/v2/social-campaigns/<campaign_id>/generat
   -d '{"prompt":"Holiday campaign","target_topic_count":5,"web_search_enabled":true,"auto_select":false}'
 ```
 
-Poll **`GET /api/v2/jobs/{activity_id}`**. If `auto_select` is false, user picks outline options, then **POST confirm-outline** with `selections`.
+Poll **`GET /api/v2/jobs/{activity_id}`** for **`generate`** (and other async work below). If `auto_select` is false, user picks outline options, then **POST confirm-outline** with `selections`.
+
+**Cancel:** body **`{"live_object_ids":["uuid",...]}`**. Response **`200`** full success or **`202`** if some IDs could not be cancelled (`partial_cancellation`).
+
+**Confirm-outline** returns `campaign_live_object_id` and a `workflow_type` of `ConfirmOutline`; use **GET campaign** or **GET outline-topics** to verify state rather than treating `activity_id` like a long-running job.
 
 ---
 
@@ -175,9 +234,9 @@ Poll **`GET /api/v2/jobs/{activity_id}`**. If `auto_select` is false, user picks
 | Retry variation | POST | `.../posts/{post_id}/variations/{variation_id}/retry` |
 | Aspect ratio variant | POST | `.../posts/{post_id}/variations/{variation_id}/generate-aspect-ratio` |
 | Edit variation image | POST | `.../posts/{post_id}/variations/{variation_id}/edit-image` |
-| Accept edit (if needed) | POST | `.../posts/{post_id}/variations/{variation_id}/accept-edit` |
+| Accept edit | POST | `.../posts/{post_id}/variations/{variation_id}/accept-edit` |
 
-Poll **`GET /api/v2/jobs/{activity_id}`** for async variation work.
+Poll **`GET /api/v2/jobs/{activity_id}`** for async variation work. **edit-image** typically **auto-applies** the result; **accept-edit** applies a completed edit when needed.
 
 ---
 
@@ -196,7 +255,7 @@ Poll **`GET /api/v2/jobs/{activity_id}`** for async variation work.
 |--------|--------|------|
 | Generate campaign theme (async) | POST | `/api/v2/social-campaigns/{campaign_id}/generate-theme` |
 
-Poll jobs with returned activity id.
+Poll **`GET /api/v2/jobs/{activity_id}`** with the returned `activity_id`.
 
 ---
 
@@ -206,7 +265,10 @@ Poll jobs with returned activity id.
 |--------|--------|------|
 | Export full campaign ZIP | POST | `/api/v2/social-campaigns/{campaign_id}/exports/zip` |
 | Export one topic ZIP | POST | `/api/v2/social-campaigns/{campaign_id}/posts/{post_id}/exports/zip` |
+| Bulk rich ZIP (text + images) | POST | `/api/v2/social-campaigns/{campaign_id}/posts/exports/bulk-rich` |
 | Poll export | GET | `/api/v2/social-campaigns/{campaign_id}/exports/{export_id}` |
+
+**bulk-rich:** optional body with `posts` (list of `{ topic_id, variation_ids? }`), `format` (default `MD`), `aspect_ratios`. Omit `posts` to export all posts.
 
 ```bash
 curl -X POST "$LAYERPROOF_BASE_URL/api/v2/social-campaigns/<campaign_id>/exports/zip" \
@@ -253,7 +315,7 @@ fi
 2. **Generate** → poll **jobs** until `DONE` / handle `failure_reason`.
 3. **Exports** → poll **`.../social-campaigns/{id}/exports/{export_id}`** until `COMPLETED` or `FAILED`.
 4. **Topics** are listed under **`posts`** in API paths; treat `post_id` as **topic id**.
-5. There is **no** `generate-platform` or per-platform image-edit in this public controller; platform-specific data appears in **get** campaign and **citations/history** endpoints when present.
+5. This controller does **not** expose `generate-platform`, per-platform PUT posts, legacy `image-edit` on the topic, or PNG platform exports; platform-specific read APIs are **citations** and **history** above.
 
 ---
 
