@@ -218,6 +218,168 @@ type DuplicateSectionResponse = {
   image_gen_live_object_id?: string | null;
   message: string;
 };
+
+// --- Improve Section (POST) — async ---
+type ImproveSectionRequest = {
+  section_id: string;
+};
+type ImproveSectionResponse = {
+  activity_id: string;
+  conversation_id?: string | null;
+  live_object_id: string;
+};
+
+// --- Manual Slide Generation (POST) — async ---
+type ManualSlideGenerationRequest = {
+  slide_section_id: string;
+  prompt?: string | null;
+  reference_image_paths?: string[] | null;
+  model_code_name?: string | null;
+};
+type ManualSlideGenerationResponse = {
+  activity_id: string;
+  slide_section_id: string;
+  section_improvement_live_object_id?: string | null;
+  transcript_gen_live_object_id?: string | null;
+  image_gen_live_object_id?: string | null;
+};
+
+// --- Visual Style Description (PATCH) ---
+type UpdateVisualStyleDescriptionRequest = {
+  visual_style_description: string;
+};
+type UpdateVisualStyleDescriptionResponse = {
+  slide_deck_id: string;
+  theme_generation_live_object_id: string;
+  message: string;
+};
+
+// --- Transcript Versions (GET / POST / PATCH) ---
+type TranscriptVersionSummary = {
+  version_id: string;
+  version_number: number;
+  created_at: string;
+  created_by: string;
+  source: string;
+};
+type ListTranscriptVersionsResponse = {
+  transcript_gen_live_object_id: string;
+  current_version_id?: string | null;
+  versions: TranscriptVersionSummary[];
+};
+type RestoreTranscriptVersionResponse = {
+  success: boolean;
+  message: string;
+};
+type MarkTranscriptReadResponse = {
+  transcript_gen_live_object_id: string;
+  is_read: boolean;
+  success: boolean;
+  message: string;
+};
+type MarkImprovementReadResponse = {
+  section_id: string;
+  is_read: boolean;
+  success: boolean;
+  message: string;
+};
+type MarkLiveObjectReadRequest = {
+  type: string;
+};
+type MarkLiveObjectReadResponse = {
+  live_object_id: string;
+  type: string;
+  is_read: boolean;
+  success: boolean;
+  message: string;
+};
+
+// --- Batch Generate Layout (POST) — async ---
+type BatchGenerateLayoutRequest = {
+  aspect_ratio?: string | null;
+};
+type BatchGenerateLayoutResponse = {
+  outline_generation_live_object_id: string;
+  total_slides: number;
+  message: string;
+  estimated_completion_seconds: number;
+};
+
+// --- Text-to-Speech (POST / GET) — async ---
+type GenerateTextToSpeechRequest = {
+  voice?: string | null;
+  language_code?: string | null;
+  audio_format?: string | null;
+};
+type GenerateTextToSpeechResponse = {
+  activity_id: string;
+  slide_section_id: string;
+  audio_generation_live_object_id: string;
+};
+type GetAudioDownloadUrlResponse = {
+  status: string;
+  download_url?: string | null;
+  audio_duration?: number | null;
+  audio_size_bytes?: number | null;
+  expires_at?: string | null;
+  message: string;
+};
+
+// --- Update Slide Deck Settings (PATCH) ---
+type UpdateSlideDeckRequest = {
+  deck_type?: string | null;
+  slide_numbers?: number | null;
+  aspect_ratio?: string | null;
+};
+type UpdateSlideDeckResponse = {
+  id: string;
+  deck_type: string;
+  slide_numbers: number;
+  aspect_ratio: string;
+};
+
+// --- Import PPTX (POST) ---
+type PrepareImportUploadResponse = {
+  upload_url: string;
+  s3_key: string;
+};
+type ImportPptxRequest = {
+  pptx_s3_key: string;
+};
+type ImportPptxResponse = {
+  activity_id: string;
+  workflow_type: string;
+  live_object_id: string;
+  status: string;
+};
+
+// --- Tone Settings (GET / PUT) ---
+type ToneSettingsResponse = {
+  tone_settings_id: string;
+  output_language?: string | null;
+  text_detail_level?: string | null;
+  tone?: string | null;
+};
+type UpsertToneSettingsRequest = {
+  output_language?: string | null;
+  text_detail_level?: string | null;
+  tone?: string | null;
+};
+
+// --- Citations ---
+type GetAllCitationsResponse = {
+  citations: unknown[];
+  total: number;
+};
+type GetSlideCitationsResponse = {
+  slide_index: number;
+  slide_section_id: string;
+  transcript: unknown[];
+  image: unknown[];
+};
+type GetCitationDetailResponse = {
+  citation: unknown;
+};
 ```
 
 ---

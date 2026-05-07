@@ -35,6 +35,12 @@ type SlideImageEditRequest = {
   other_reference_image_paths?: string[];
   /** Optional region to edit; only this region is modified */
   cropped_region?: CroppedRegion;
+  /** Optional mask image path for targeted editing */
+  mask_image_path?: string;
+  /** Optional model preset for image generation */
+  model_preset?: string | null;
+  /** Optional OpenAI GPT image quality (e.g. "auto", "high", "low") */
+  openai_gpt_image_quality?: string | null;
 };
 
 // --- Accept Image Edit (POST) ---

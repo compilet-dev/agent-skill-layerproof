@@ -303,6 +303,7 @@ When the user asks to manage projects, do the following.
 | List deleted projects | `/api/v2/projects/deleted?page=0&page_size=20` | GET |
 | Restore deleted project | `/api/v2/projects/{projectId}/restore` | POST |
 | Permanently delete (after soft delete) | `/api/v2/projects/{projectId}/permanently` | DELETE |
+| Permanently delete (after soft delete) | `/api/v2/projects/{projectId}/permanently` | DELETE |
 
 ### 2. Build and run the request
 

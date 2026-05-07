@@ -1,6 +1,6 @@
 ---
 name: social-campaigns
-description: Public API social campaigns (X-API-KEY). CRUD campaigns, outline topics, generate/cancel generation, confirm outline, topics, variations/captions/images, exports (ZIP + bulk rich), theme, citations/history. PublicApiSocialCampaignController (/api/v2/social-campaigns).
+description: Public API social campaigns (X-API-KEY). CRUD campaigns, outline topics, generate/cancel generation, confirm outline, topics, variations/captions/images/carousel, exports (ZIP + bulk rich), theme, citations/history. PublicApiSocialCampaignController (/api/v2/social-campaigns).
 ---
 
 # Skill: Social Campaigns
@@ -9,9 +9,10 @@ description: Public API social campaigns (X-API-KEY). CRUD campaigns, outline to
 
 **Social campaigns** are projects with `project_kind` **SOCIAL_CAMPAIGN**. This skill documents **PublicApiSocialCampaignController** at `/api/v2/social-campaigns`. Authenticate with `X-API-KEY`.
 
-- **Campaign generation, variations, captions, theme, image edits** return `activity_id` — poll **`GET /api/v2/jobs/{activity_id}`** (same as slide workflows).
+- **Campaign generation, variations, captions, theme, image edits, carousel** return `activity_id` — poll **`GET /api/v2/jobs/{activity_id}`** (same as slide workflows).
 - **ZIP exports** return `export_id` — poll **`GET /api/v2/social-campaigns/{campaign_id}/exports/{export_id}`** (not the jobs endpoint).
 - JSON uses **snake_case** property names (e.g. `topic_ids`, `live_object_ids`).
+- **Carousel variations** are multi-slide image sets (convert-to-carousel or generate-carousel-variation).
 
 ---
 
@@ -101,6 +102,61 @@ type CancelSocialCampaignGenerationRequest = {
 // --- Confirm outline (after outline step when auto_select is false) ---
 type PublicApiConfirmOutlineRequest = {
   selections: { topic_index: number; option_index: number }[];
+};
+
+// --- Carousel variations ---
+type GenerateCarouselVariationRequest = {
+  image_count?: number | null;
+  prompt?: string | null;
+  reference_image_paths?: string[] | null;
+  text_position?: string | null;
+  outline_slides?: string[] | null;
+  default_aspect_ratio?: string | null;
+};
+type GenerateCarouselVariationResponse = {
+  topic_live_object_id: string;
+  carousel_live_object_id: string;
+  activity_id: string;
+};
+type GenerateCarouselAspectRatioRequest = {
+  aspect_ratio: string;
+  force_overwrite?: boolean;
+};
+type GenerateCarouselAspectRatioResponse = {
+  carousel_live_object_id: string;
+  activity_id: string;
+};
+type GenerateMoreCarouselImagesRequest = {
+  additional_count: number;
+  prompt?: string | null;
+  reference_image_paths?: string[] | null;
+};
+type GenerateMoreCarouselImagesResponse = {
+  carousel_live_object_id: string;
+  activity_id: string;
+};
+type ConvertVariationToCarouselRequest = {
+  text_position?: string | null;
+};
+type ConvertVariationToCarouselResponse = {
+  topic_live_object_id: string;
+  carousel_variation_id: string;
+  carousel_live_object_id: string;
+  version: number;
+};
+
+// --- Update campaign settings ---
+type PublicApiUpdateCampaignSettingsRequest = {
+  theme_id?: string | null;
+  theme_name?: string | null;
+  image_generation_model_preset?: string | null;
+  openai_gpt_image_quality?: string | null;
+};
+type PublicApiUpdateCampaignSettingsResponse = {
+  theme_id: string | null;
+  theme_name: string | null;
+  image_generation_model_preset: string | null;
+  openai_gpt_image_quality: string | null;
 };
 
 // --- Topics (“posts” in paths) ---
@@ -232,6 +288,10 @@ Poll **`GET /api/v2/jobs/{activity_id}`** for **`generate`** (and other async wo
 | More variations | POST | `.../posts/{post_id}/generate-more-variations` |
 | Delete variation | DELETE | `.../posts/{post_id}/variations/{variation_id}` |
 | Retry variation | POST | `.../posts/{post_id}/variations/{variation_id}/retry` |
+| Convert variation to carousel | POST | `.../posts/{post_id}/variations/{variation_id}/convert-to-carousel` |
+| Generate carousel variation | POST | `.../posts/{post_id}/generate-carousel-variation` |
+| Generate carousel aspect ratio | POST | `.../posts/{post_id}/carousel-variations/{carousel_variation_id}/generate-aspect-ratio` |
+| Generate more carousel images | POST | `.../posts/{post_id}/carousel-variations/{carousel_variation_id}/generate-more-images` |
 | Aspect ratio variant | POST | `.../posts/{post_id}/variations/{variation_id}/generate-aspect-ratio` |
 | Edit variation image | POST | `.../posts/{post_id}/variations/{variation_id}/edit-image` |
 | Accept edit | POST | `.../posts/{post_id}/variations/{variation_id}/accept-edit` |
